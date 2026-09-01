@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>notita — a ridiculously simple notebook for your classes</title>
+  <meta name="description" content="A minimal, keyboard-first, local-first note-taking app for Windows 11. Pure black or pure white. Live WPM. On-device voice transcription." />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23000%22/><text x=%2230%22 y=%2272%22 font-family=%22Arial%22 font-weight=%22700%22 font-size=%2260%22 fill=%22%23fff%22>n</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="wrap header-inner">
+      <span class="brand">notita<span class="brand-dot">.</span></span>
+      <div class="header-actions">
+        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+          <span class="theme-thumb"></span>
+          <svg viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="2.6" stroke="currentColor" stroke-width="1.2"/><path d="M6 0.8V2M6 10V11.2M11.2 6H10M2 6H0.8M9.5 2.5L8.6 3.4M3.4 8.6L2.5 9.5M9.5 9.5L8.6 8.6M3.4 3.4L2.5 2.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          <svg viewBox="0 0 12 12" fill="none"><path d="M10.5 7.4A4.6 4.6 0 1 1 4.6 1.5a3.7 3.7 0 0 0 5.9 5.9Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        </button>
+        <a class="btn btn-primary btn-sm" href="https://github.com/Gxnza48/notita/releases/latest">Download</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="wrap">
+        <div class="eyebrow"><span class="eyebrow-dot"></span>Windows 11 · Free · Local-first</div>
+        <h1>Open. Write.<br />Done.</h1>
+        <p class="hero-sub">A ridiculously simple notebook for your classes. Pure black, pure white, nothing fighting for your attention — just a page and your next thought.</p>
+        <div class="hero-ctas">
+          <a class="btn btn-primary" href="https://github.com/Gxnza48/notita/releases/latest">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1V9.5M7 9.5L3.8 6.3M7 9.5L10.2 6.3M2 11.5H12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Download for Windows
+          </a>
+          <a class="btn btn-ghost" href="https://github.com/Gxnza48/notita" target="_blank" rel="noopener">View source</a>
+        </div>
+        <p class="req">Latest release · Windows 10/11 · No account, no cloud required</p>
+
+        <div class="demo-shell" data-reveal>
+          <div class="demo-card">
+            <div class="demo-bar">
+              <span>Mathematics</span>
+              <span class="demo-wpm" id="demoWpm">🔥 <b id="demoWpmValue">0</b> WPM</span>
+            </div>
+            <div class="demo-body">
+              <div class="demo-title">Derivatives</div>
+              <div class="demo-text" id="demoText"><span class="demo-caret"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="markers-section">
+      <div class="wrap">
+        <div class="section-kicker" data-reveal>Built for the way students actually take notes</div>
+        <h2 data-reveal>Four keystrokes turn plain text into a study system.</h2>
+        <div class="marker-grid" data-reveal>
+          <div class="marker-cell m-important">
+            <span class="marker-glyph">!</span>
+            <h3>Important</h3>
+            <p>Type <code class="mono">! </code> and flag what's going to be on the exam.</p>
+          </div>
+          <div class="marker-cell m-question">
+            <span class="marker-glyph">?</span>
+            <h3>Question</h3>
+            <p>Type <code class="mono">? </code> to remember what to ask the professor.</p>
+          </div>
+          <div class="marker-cell m-task">
+            <span class="marker-glyph">→</span>
+            <h3>Task</h3>
+            <p>Type <code class="mono">→ </code> for the thing you still need to finish.</p>
+          </div>
+          <div class="marker-cell m-voice">
+            <span class="marker-glyph">
+              <svg width="15" height="15" viewBox="0 0 14 14" fill="none"><rect x="5" y="1.3" width="4" height="7" rx="2" stroke="currentColor" stroke-width="1.4"/><path d="M2.6 6.6C2.6 9.4 4.6 11.2 7 11.2C9.4 11.2 11.4 9.4 11.4 6.6M7 11.2V12.9M4.8 12.9H9.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            </span>
+            <h3>Voice</h3>
+            <p>Press <code class="mono">Ctrl Shift V</code> and dictate — transcribed locally, on-device.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="wpm-section">
+      <div class="wrap" style="display:contents">
+        <div class="wpm-copy" data-reveal>
+          <div class="section-kicker">The signature detail</div>
+          <h2>A live WPM counter with a sense of humor.</h2>
+          <p>It stays out of the way — until you're actually flying. Then a small, playful readout appears next to your cursor and fades out the moment you stop.</p>
+        </div>
+        <div class="wpm-ladder" data-reveal>
+          <div class="wpm-row"><span>Warming up</span><span class="n">62 WPM</span></div>
+          <div class="wpm-row"><span>⚡ Picking up</span><span class="n">108 WPM</span></div>
+          <div class="wpm-row"><span>🔥 Flying</span><span class="n">134 WPM</span></div>
+          <div class="wpm-row"><span>💀 Personal best</span><span class="n">167 WPM</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="band">
+      <div class="wrap">
+        <h2 data-reveal>Your notes never leave your laptop.</h2>
+        <p data-reveal>SQLite on disk, autosave on every keystroke, and speech transcription that runs entirely on-device — no server ever sees what you write or say.</p>
+        <div class="band-tags" data-reveal>
+          <span class="band-tag">No account</span>
+          <span class="band-tag">Works offline</span>
+          <span class="band-tag">Open source</span>
+          <span class="band-tag">Auto-updates in place</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <div class="wrap">
+        <h2 data-reveal>Your next class starts&nbsp;in two&nbsp;minutes.</h2>
+        <a class="btn btn-primary" href="https://github.com/Gxnza48/notita/releases/latest" data-reveal>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1V9.5M7 9.5L3.8 6.3M7 9.5L10.2 6.3M2 11.5H12" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Download notita
+        </a>
+        <p class="req">Latest release · ~4 MB installer</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="wrap footer-inner">
+      <span>notita — built for people who'd rather be writing.</span>
+      <div class="footer-links">
+        <a href="https://github.com/Gxnza48/notita" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/Gxnza48/notita/releases" target="_blank" rel="noopener">Releases</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
