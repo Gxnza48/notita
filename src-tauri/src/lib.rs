@@ -1,6 +1,7 @@
 mod commands;
 mod db;
 mod models;
+mod voice;
 
 use commands::AppState;
 use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
@@ -87,6 +88,7 @@ pub fn run() {
             let app_data_dir = app.path().app_data_dir().expect("no app data dir");
             let pool = db::init_pool(&app_data_dir);
             app.manage(AppState { pool });
+            app.manage(voice::VoiceState::default());
 
             let global_shortcut = app.global_shortcut();
             if let Err(e) = global_shortcut.register(quick_capture_shortcut()) {
@@ -165,6 +167,11 @@ pub fn run() {
             commands::export_text_file,
             commands::set_window_theme,
             commands::log_client_error,
+            voice::get_voice_model_status,
+            voice::download_voice_model,
+            voice::warm_up_voice_model,
+            voice::start_voice_recording,
+            voice::stop_voice_recording,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -41,4 +41,10 @@ export const api = {
 
   exportTextFile: (path: string, contents: string) =>
     invoke<void>("export_text_file", { path, contents }),
+
+  getVoiceModelStatus: () => invoke<{ ready: boolean }>("get_voice_model_status"),
+  downloadVoiceModel: () => invoke<void>("download_voice_model"),
+  warmUpVoiceModel: () => invoke<void>("warm_up_voice_model"),
+  startVoiceRecording: (language: string) => invoke<void>("start_voice_recording", { language }),
+  stopVoiceRecording: () => invoke<void>("stop_voice_recording"),
 };

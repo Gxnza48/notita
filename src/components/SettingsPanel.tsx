@@ -4,6 +4,7 @@ import { Modal } from "./Modal";
 import { useUiStore } from "../lib/uiStore";
 import { useSettingsStore } from "../lib/settingsStore";
 import { useUpdaterStore } from "../lib/updaterStore";
+import { useVoiceStore, type VoiceLanguage } from "../lib/voiceStore";
 import type { ThemePreference } from "../lib/types";
 import { COMMANDS, type CommandCategory } from "../lib/commands";
 
@@ -11,6 +12,12 @@ const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
   { value: "system", label: "System" },
   { value: "dark", label: "Dark" },
   { value: "light", label: "Light" },
+];
+
+const VOICE_LANGUAGE_OPTIONS: { value: VoiceLanguage; label: string }[] = [
+  { value: "es", label: "Español" },
+  { value: "en", label: "English" },
+  { value: "auto", label: "Auto" },
 ];
 
 const CATEGORY_ORDER: CommandCategory[] = ["General", "Notes", "Navigation", "Windows"];
@@ -30,6 +37,9 @@ export function SettingsPanel() {
   const setOpenLastNote = useSettingsStore((s) => s.setOpenLastNote);
   const setStartWithWindows = useSettingsStore((s) => s.setStartWithWindows);
   const setCloseToTray = useSettingsStore((s) => s.setCloseToTray);
+
+  const voiceLanguage = useVoiceStore((s) => s.language);
+  const setVoiceLanguage = useVoiceStore((s) => s.setLanguage);
 
   return (
     <Modal onClose={() => setSettingsOpen(false)}>
@@ -78,6 +88,24 @@ export function SettingsPanel() {
                 onChange={(e) => setLineHeight(Number(e.target.value))}
               />
               <span className="settings-value">{lineHeight.toFixed(1)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="settings-group">
+          <div className="settings-group-title">Voice</div>
+          <div className="settings-row">
+            <span>Dictation language</span>
+            <div className="segmented">
+              {VOICE_LANGUAGE_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  className={"segmented-item" + (voiceLanguage === opt.value ? " active" : "")}
+                  onClick={() => setVoiceLanguage(opt.value)}
+                >
+                  {opt.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>

@@ -102,6 +102,20 @@ export function CheckIcon({ size = 13 }: IconProps) {
   );
 }
 
+export function MicIcon({ size = 13 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <rect x="5" y="1.3" width="4" height="7" rx="2" stroke="currentColor" strokeWidth={STROKE} />
+      <path
+        d="M2.6 6.6C2.6 9.4 4.6 11.2 7 11.2C9.4 11.2 11.4 9.4 11.4 6.6M7 11.2V12.9M4.8 12.9H9.2"
+        stroke="currentColor"
+        strokeWidth={STROKE}
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
 export function SunIcon({ size = 12 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 12 12" fill="none" className="theme-icon sun">

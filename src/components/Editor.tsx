@@ -13,7 +13,9 @@ import { useUiStore } from "../lib/uiStore";
 import { engine, setWpmContext } from "../lib/wpmStore";
 import type { SaveNotePayload } from "../lib/types";
 import { WpmBadge } from "./WpmBadge";
+import { VoiceButton } from "./VoiceButton";
 import { registerEditorFlush } from "../lib/editorBridge";
+import { registerVoiceInsertHandler } from "../lib/voiceBridge";
 
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -132,6 +134,15 @@ export function Editor() {
     return () => registerEditorFlush(null);
   }, []);
 
+  // insert transcribed voice segments at the cursor of whichever note is open
+  useEffect(() => {
+    if (!editor) return;
+    registerVoiceInsertHandler((text) => {
+      editor.chain().focus().insertContent(`${text} `).run();
+    });
+    return () => registerVoiceInsertHandler(null);
+  }, [editor]);
+
   useEffect(() => {
     const id = window.setInterval(() => setClock(formatClock(new Date())), 15000);
     return () => window.clearInterval(id);
@@ -174,6 +185,7 @@ export function Editor() {
         </div>
       </div>
       <WpmBadge />
+      <VoiceButton />
     </div>
   );
 }

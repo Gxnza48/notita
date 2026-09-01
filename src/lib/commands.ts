@@ -2,6 +2,7 @@ import { WebviewWindow } from "@tauri-apps/api/webviewWindow";
 import { useUiStore } from "./uiStore";
 import { useDataStore } from "./dataStore";
 import { flushEditor } from "./editorBridge";
+import { useVoiceStore } from "./voiceStore";
 
 export type CommandCategory = "General" | "Notes" | "Navigation" | "Windows";
 
@@ -103,6 +104,13 @@ export const COMMANDS: CommandDefinition[] = [
     category: "Windows",
     shortcut: { ctrl: true, alt: true, code: "Space", display: "Ctrl Alt Space" },
     run: runQuickCapture,
+  },
+  {
+    id: "voice-note",
+    label: "Voice note",
+    category: "Notes",
+    shortcut: { ctrl: true, shift: true, key: "v", display: "Ctrl Shift V" },
+    run: () => useVoiceStore.getState().toggleRecording(),
   },
   {
     id: "close-modal",
