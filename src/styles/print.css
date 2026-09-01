@@ -1,0 +1,45 @@
+@media print {
+  .sidebar,
+  .editor-topbar,
+  .wpm-wrap,
+  .modal-overlay {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    overflow: visible !important;
+  }
+
+  .notita-app {
+    height: auto !important;
+    display: block !important;
+  }
+
+  .notita-main,
+  .editor-pane,
+  .editor-scroll {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .editor-page {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+
+  .note-title-input,
+  .notita-editor-content,
+  .notita-editor-content * {
+    color: #000000 !important;
+    background: transparent !important;
+  }
+
+  .notita-editor-content p[data-marker-type] {
+    background: transparent !important;
+    border-left: 2px solid #000000;
+    padding-left: 12px;
+  }
+}
