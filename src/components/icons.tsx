@@ -94,6 +94,14 @@ export function CopyIcon({ size = 13 }: IconProps) {
   );
 }
 
+export function CheckIcon({ size = 13 }: IconProps) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
+      <path d="M2.5 7.3L5.5 10.3L11.5 3.7" stroke="currentColor" strokeWidth={STROKE} strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function SunIcon({ size = 12 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 12 12" fill="none" className="theme-icon sun">

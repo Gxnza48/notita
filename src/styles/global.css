@@ -251,6 +251,41 @@ kbd {
   opacity: 0.88;
 }
 
+.crash-screen {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: var(--bg);
+  text-align: center;
+  padding: 24px;
+}
+.crash-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--fg);
+}
+.crash-message {
+  font-size: 13px;
+  color: var(--fg-tertiary);
+  max-width: 480px;
+}
+.crash-reload {
+  margin-top: 8px;
+  padding: 8px 16px;
+  border-radius: var(--radius-sm);
+  background: var(--fg);
+  color: var(--bg);
+  font-size: 13px;
+  font-weight: 500;
+}
+.crash-reload:hover {
+  opacity: 0.85;
+}
+
 /* ---------- Tooltip ---------- */
 .tooltip-wrap {
   position: relative;

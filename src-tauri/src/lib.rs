@@ -54,6 +54,12 @@ fn show_main_window(app: &tauri::AppHandle) {
 pub fn run() {
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            // A second launch attempt (e.g. double-clicking the shortcut again)
+            // just focuses the existing window instead of spawning a new
+            // process/tray icon.
+            show_main_window(app);
+        }))
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_process::init())
@@ -158,6 +164,7 @@ pub fn run() {
             commands::get_session_stats,
             commands::export_text_file,
             commands::set_window_theme,
+            commands::log_client_error,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

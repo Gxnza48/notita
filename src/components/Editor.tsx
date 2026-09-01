@@ -6,6 +6,7 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Link from "@tiptap/extension-link";
 import { MarkerParagraph } from "../lib/markerExtension";
+import { CodeBlockWithCopy } from "../lib/codeBlockExtension";
 import { analyzeDoc } from "../lib/markers";
 import { useDataStore } from "../lib/dataStore";
 import { useUiStore } from "../lib/uiStore";
@@ -37,8 +38,9 @@ export function Editor() {
 
   const editor = useEditor({
     extensions: [
-      StarterKit.configure({ paragraph: false }),
+      StarterKit.configure({ paragraph: false, codeBlock: false }),
       MarkerParagraph,
+      CodeBlockWithCopy,
       Placeholder.configure({
         placeholder: ({ node }) => (node.type.name === "paragraph" ? "Start writing something worth remembering…" : ""),
       }),

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { Sidebar } from "./components/Sidebar";
 import { Editor } from "./components/Editor";
@@ -32,22 +32,33 @@ export default function App() {
     applyWindowTheme(theme);
   }, [theme]);
 
+  const [bootError, setBootError] = useState<string | null>(null);
+  const [bootAttempt, setBootAttempt] = useState(0);
+
   useEffect(() => {
     async function boot() {
-      await useDataStore.getState().loadAll();
-      await useSettingsStore.getState().load();
-      const { recentNotes } = useDataStore.getState();
-      const { openLastNote } = useSettingsStore.getState();
-      if (openLastNote && recentNotes.length > 0) {
-        const latest = recentNotes[0];
-        setView({ kind: "subject", subjectId: latest.subject_id });
-        setActiveNoteId(latest.id);
-        await useDataStore.getState().openNote(latest.id);
+      try {
+        setBootError(null);
+        await useDataStore.getState().loadAll();
+        await useSettingsStore.getState().load();
+        const { recentNotes } = useDataStore.getState();
+        const { openLastNote } = useSettingsStore.getState();
+        if (openLastNote && recentNotes.length > 0) {
+          const latest = recentNotes[0];
+          setView({ kind: "subject", subjectId: latest.subject_id });
+          setActiveNoteId(latest.id);
+          await useDataStore.getState().openNote(latest.id);
+        }
+      } catch (e) {
+        // Without this, a failed initial load (e.g. a transient SQLite lock)
+        // left the app stuck forever on an empty div — indistinguishable
+        // from a frozen black screen.
+        setBootError(e instanceof Error ? e.message : String(e));
       }
     }
     boot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [bootAttempt]);
 
   useEffect(() => {
     const unlistenPromise = listen<NoteCreatedPayload>(NOTE_CREATED_EVENT, (event) => {
@@ -85,6 +96,18 @@ export default function App() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [setFocusMode]);
+
+  if (bootError) {
+    return (
+      <div className="crash-screen">
+        <p className="crash-title">Couldn't load your notes.</p>
+        <p className="crash-message">{bootError}</p>
+        <button className="crash-reload" onClick={() => setBootAttempt((n) => n + 1)}>
+          Retry
+        </button>
+      </div>
+    );
+  }
 
   if (!ready) {
     return <div className="notita-app" />;

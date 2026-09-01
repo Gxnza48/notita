@@ -2,7 +2,7 @@ use crate::db::Pool;
 use crate::models::*;
 use r2d2_sqlite::rusqlite::{self, params};
 use std::time::{SystemTime, UNIX_EPOCH};
-use tauri::State;
+use tauri::{Manager, State};
 
 pub struct AppState {
     pub pool: Pool,
@@ -483,4 +483,27 @@ pub fn set_window_theme(window: tauri::Window, theme: String) -> Result<(), Stri
         _ => None,
     };
     window.set_theme(theme).map_err(|e| e.to_string())
+}
+
+// ---------- Diagnostics ----------
+
+/// Appends a frontend error (uncaught exception / unhandled rejection) to a
+/// local log file, so issues can be diagnosed from a machine we can't watch
+/// live.
+#[tauri::command]
+pub fn log_client_error(app: tauri::AppHandle, message: String) -> Result<(), String> {
+    use std::io::Write;
+    let dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|e| e.to_string())?;
+    std::fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
+    let path = dir.join("client-errors.log");
+    let mut file = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(path)
+        .map_err(|e| e.to_string())?;
+    writeln!(file, "[{}] {}", now_ms(), message).map_err(|e| e.to_string())?;
+    Ok(())
 }
