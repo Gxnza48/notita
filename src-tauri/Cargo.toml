@@ -1,6 +1,6 @@
 [package]
 name = "notita"
-version = "0.1.3"
+version = "0.1.4"
 description = "notita — a ridiculously simple notebook for your classes"
 authors = ["notita"]
 edition = "2021"

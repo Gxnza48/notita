@@ -162,11 +162,11 @@ header {
   justify-content: space-between;
   color: var(--fg-3);
 }
-.theme-toggle svg {
+.theme-toggle i {
   position: relative;
   z-index: 1;
-  width: 12px;
-  height: 12px;
+  font-size: 11px;
+  line-height: 1;
 }
 .theme-thumb {
   position: absolute;
@@ -199,6 +199,10 @@ header {
   border: 1px solid transparent;
   cursor: pointer;
   white-space: nowrap;
+}
+.btn i {
+  font-size: 13px;
+  line-height: 1;
 }
 .btn-primary {
   background: var(--fg);
@@ -320,8 +324,8 @@ header {
 }
 .bolt-icon {
   flex-shrink: 0;
-  position: relative;
-  top: 1px;
+  font-size: 11px;
+  line-height: 1;
 }
 .demo-wpm .bolt-icon {
   color: var(--accent);
@@ -413,7 +417,7 @@ header {
 .marker-cell.m-important .marker-glyph { background: var(--warm-soft); color: var(--warm); }
 .marker-cell.m-question .marker-glyph { background: var(--accent-soft); color: var(--accent); }
 .marker-cell.m-task .marker-glyph { background: var(--task-soft); color: var(--task); }
-.marker-cell.m-voice .marker-glyph { background: var(--surface); color: var(--fg); }
+.marker-cell.m-voice .marker-glyph { background: var(--surface); color: var(--fg); font-size: 15px; }
 .marker-cell h3 {
   font-size: 14.5px;
   font-weight: 600;
@@ -507,10 +511,6 @@ header {
   background: var(--bg);
   color: var(--accent);
 }
-.wpm-badge-ring .bolt-icon {
-  top: 0;
-}
-
 /* ---- local-first band ---- */
 .band {
   padding: 88px 0;

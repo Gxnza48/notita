@@ -194,7 +194,7 @@ fn transcribe(ctx: &WhisperContext, samples: &[f32], language: &str) -> Result<S
     params.set_print_realtime(false);
     params.set_print_timestamps(false);
     params.set_no_context(true);
-    params.set_single_segment(false);
+    params.set_single_segment(true);
     params.set_n_threads(
         std::thread::available_parallelism()
             .map(|n| n.get() as i32)
@@ -256,9 +256,9 @@ fn run_processing_loop(
     language: String,
 ) {
     const SILENCE_RMS: f32 = 0.012;
-    const SILENCE_HOLD_MS: u128 = 650;
-    const MIN_SEGMENT_MS: u128 = 500;
-    const MAX_SEGMENT_MS: u128 = 15000;
+    const SILENCE_HOLD_MS: u128 = 400;
+    const MIN_SEGMENT_MS: u128 = 350;
+    const MAX_SEGMENT_MS: u128 = 5000;
     const NO_AUDIO_HINT_MS: u128 = 6000;
 
     let mut segment: Vec<f32> = Vec::new();
