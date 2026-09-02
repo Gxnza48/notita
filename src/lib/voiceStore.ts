@@ -12,6 +12,8 @@ interface VoiceState {
   recording: boolean;
   language: VoiceLanguage;
   error: string | null;
+  hint: string | null;
+  deviceName: string | null;
 
   checkModelStatus: () => Promise<void>;
   setLanguage: (lang: VoiceLanguage) => void;
@@ -38,6 +40,14 @@ function armListenersOnce() {
   listen<string>("voice-error", (event) => {
     useVoiceStore.setState({ error: event.payload, recording: false });
   });
+
+  listen<string>("voice-hint", (event) => {
+    useVoiceStore.setState({ hint: event.payload });
+  });
+
+  listen<{ name: string }>("voice-device", (event) => {
+    useVoiceStore.setState({ deviceName: event.payload.name, hint: null });
+  });
 }
 
 armListenersOnce();
@@ -49,6 +59,8 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
   recording: false,
   language: "es",
   error: null,
+  hint: null,
+  deviceName: null,
 
   checkModelStatus: async () => {
     try {
@@ -63,10 +75,10 @@ export const useVoiceStore = create<VoiceState>((set, get) => ({
 
   toggleRecording: async () => {
     const { recording, modelReady, language } = get();
-    set({ error: null });
+    set({ error: null, hint: null });
 
     if (recording) {
-      set({ recording: false });
+      set({ recording: false, deviceName: null });
       try {
         await api.stopVoiceRecording();
       } catch (e) {

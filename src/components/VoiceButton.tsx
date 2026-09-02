@@ -9,6 +9,8 @@ export function VoiceButton() {
   const downloadProgress = useVoiceStore((s) => s.downloadProgress);
   const recording = useVoiceStore((s) => s.recording);
   const error = useVoiceStore((s) => s.error);
+  const hint = useVoiceStore((s) => s.hint);
+  const deviceName = useVoiceStore((s) => s.deviceName);
   const checkModelStatus = useVoiceStore((s) => s.checkModelStatus);
   const toggleRecording = useVoiceStore((s) => s.toggleRecording);
 
@@ -19,7 +21,9 @@ export function VoiceButton() {
   const label = downloading
     ? `Downloading speech model… ${downloadProgress}%`
     : recording
-      ? "Stop voice note"
+      ? deviceName
+        ? `Stop voice note — recording from ${deviceName}`
+        : "Stop voice note"
       : modelReady
         ? "Start voice note (Ctrl Shift V)"
         : "Start voice note — downloads a one-time speech model (~466 MB)";
@@ -27,6 +31,7 @@ export function VoiceButton() {
   return (
     <div className="voice-wrap">
       {error && <div className="voice-error">{error}</div>}
+      {!error && hint && <div className="voice-hint">{hint}</div>}
       <Tooltip label={label}>
         <button
           type="button"

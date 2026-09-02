@@ -318,6 +318,14 @@ header {
   font-weight: 600;
   color: var(--fg);
 }
+.bolt-icon {
+  flex-shrink: 0;
+  position: relative;
+  top: 1px;
+}
+.demo-wpm .bolt-icon {
+  color: var(--accent);
+}
 .demo-body {
   padding: 26px 24px 34px;
   min-height: 210px;
@@ -456,6 +464,51 @@ header {
   font-family: ui-monospace, "Cascadia Code", monospace;
   font-weight: 600;
   font-size: 15px;
+}
+.wpm-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--fg-2);
+}
+.wpm-row.tier-mid .wpm-label,
+.wpm-row.tier-mid .n {
+  color: var(--fg);
+}
+.wpm-row.tier-mid .bolt-icon {
+  color: var(--fg-3);
+}
+.wpm-row.tier-high {
+  border-color: var(--border-strong);
+}
+.wpm-row.tier-high .wpm-label,
+.wpm-row.tier-high .n {
+  color: var(--fg);
+}
+.wpm-row.tier-high .bolt-icon {
+  color: var(--accent);
+}
+.wpm-row.tier-peak {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.wpm-row.tier-peak .wpm-label,
+.wpm-row.tier-peak .n {
+  color: var(--fg);
+  font-weight: 600;
+}
+.wpm-badge-ring {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--accent);
+}
+.wpm-badge-ring .bolt-icon {
+  top: 0;
 }
 
 /* ---- local-first band ---- */

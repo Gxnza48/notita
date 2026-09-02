@@ -30,6 +30,31 @@ impl Default for VoiceState {
     }
 }
 
+/// Release builds have no console (`windows_subsystem = "windows"`), so
+/// `eprintln!` output is silently discarded. This is the only way voice
+/// pipeline issues (wrong input device, stream errors, transcription
+/// failures) are diagnosable after the fact.
+fn log_voice(app: &AppHandle, message: &str) {
+    let Ok(dir) = app.path().app_data_dir() else { return };
+    if std::fs::create_dir_all(&dir).is_err() {
+        return;
+    }
+    if let Ok(mut file) = std::fs::OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open(dir.join("voice-debug.log"))
+    {
+        let _ = writeln!(file, "[{}] {}", now_ms(), message);
+    }
+}
+
+fn now_ms() -> u128 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0)
+}
+
 fn model_dir(app: &AppHandle) -> Result<PathBuf, String> {
     let dir = app
         .path()
@@ -201,14 +226,20 @@ fn flush_segment(segment: &mut Vec<f32>, ctx: &WhisperContext, app: &AppHandle, 
     if segment.is_empty() {
         return;
     }
+    let sample_count = segment.len();
     let resampled = resample_to_16k(segment, input_rate);
     segment.clear();
     match transcribe(ctx, &resampled, language) {
         Ok(text) if !text.is_empty() => {
+            log_voice(app, &format!("segment ({sample_count} samples) -> \"{text}\""));
             let _ = app.emit("voice-segment", VoiceSegment { text });
         }
-        Ok(_) => {}
-        Err(e) => eprintln!("transcription error: {e}"),
+        Ok(_) => {
+            log_voice(app, &format!("segment ({sample_count} samples) -> empty transcription"));
+        }
+        Err(e) => {
+            log_voice(app, &format!("transcription error: {e}"));
+        }
     }
 }
 
@@ -228,11 +259,16 @@ fn run_processing_loop(
     const SILENCE_HOLD_MS: u128 = 650;
     const MIN_SEGMENT_MS: u128 = 500;
     const MAX_SEGMENT_MS: u128 = 15000;
+    const NO_AUDIO_HINT_MS: u128 = 6000;
 
     let mut segment: Vec<f32> = Vec::new();
     let mut speaking = false;
     let mut silence_since: Option<std::time::Instant> = None;
     let mut segment_started: Option<std::time::Instant> = None;
+    let recording_started = std::time::Instant::now();
+    let mut ever_spoke = false;
+    let mut hinted_no_audio = false;
+    let mut peak_rms_seen: f32 = 0.0;
 
     loop {
         if stop_flag.load(Ordering::Relaxed) {
@@ -241,6 +277,9 @@ fn run_processing_loop(
         match rx.recv_timeout(std::time::Duration::from_millis(200)) {
             Ok(chunk) => {
                 let rms = rms_of(&chunk);
+                if rms > peak_rms_seen {
+                    peak_rms_seen = rms;
+                }
                 segment.extend_from_slice(&chunk);
                 if segment_started.is_none() {
                     segment_started = Some(std::time::Instant::now());
@@ -248,6 +287,7 @@ fn run_processing_loop(
 
                 if rms > SILENCE_RMS {
                     speaking = true;
+                    ever_spoke = true;
                     silence_since = None;
                 } else if speaking && silence_since.is_none() {
                     silence_since = Some(std::time::Instant::now());
@@ -267,14 +307,33 @@ fn run_processing_loop(
                     segment_started = None;
                 }
             }
-            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => continue,
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {}
             Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+        }
+
+        if !hinted_no_audio && !ever_spoke && recording_started.elapsed().as_millis() > NO_AUDIO_HINT_MS {
+            hinted_no_audio = true;
+            log_voice(
+                &app,
+                &format!("no audio detected after {NO_AUDIO_HINT_MS}ms (peak RMS so far: {peak_rms_seen:.5})"),
+            );
+            let _ = app.emit(
+                "voice-hint",
+                "No audio detected. Check Windows' default microphone in Settings > Sound > Input — a virtual device (e.g. Voicemod) may be selected instead of your real mic.",
+            );
         }
     }
 
     if speaking {
         flush_segment(&mut segment, &ctx, &app, input_rate, &language);
     }
+    log_voice(
+        &app,
+        &format!(
+            "recording stopped after {}ms, ever_spoke={ever_spoke}, peak RMS={peak_rms_seen:.5}",
+            recording_started.elapsed().as_millis()
+        ),
+    );
 }
 
 /// Builds the input stream, plays it, and blocks running the processing
@@ -290,13 +349,28 @@ fn record_and_process(
     let device = host
         .default_input_device()
         .ok_or_else(|| "no microphone found".to_string())?;
+    let device_name = device.name().unwrap_or_else(|_| "unknown device".to_string());
     let config = device.default_input_config().map_err(|e| e.to_string())?;
     let sample_rate = config.sample_rate().0;
     let channels = config.channels() as usize;
     let sample_format = config.sample_format();
 
+    log_voice(
+        &app,
+        &format!(
+            "starting recording: device=\"{device_name}\" sample_rate={sample_rate} channels={channels} format={sample_format:?} language={language}"
+        ),
+    );
+    let _ = app.emit(
+        "voice-device",
+        serde_json::json!({ "name": device_name }),
+    );
+
     let (tx, rx) = std::sync::mpsc::channel::<Vec<f32>>();
-    let err_fn = |err: cpal::StreamError| eprintln!("audio stream error: {err}");
+    let app_for_err = app.clone();
+    let err_fn = move |err: cpal::StreamError| {
+        log_voice(&app_for_err, &format!("audio stream error: {err}"));
+    };
 
     let stream = match sample_format {
         cpal::SampleFormat::F32 => device.build_input_stream(
@@ -369,7 +443,7 @@ pub fn start_voice_recording(
     let app_for_thread = app.clone();
     std::thread::spawn(move || {
         if let Err(e) = record_and_process(app_for_thread.clone(), ctx, stop_flag, language) {
-            eprintln!("voice recording error: {e}");
+            log_voice(&app_for_thread, &format!("voice recording error: {e}"));
             let _ = app_for_thread.emit("voice-error", e);
         }
     });
