@@ -297,9 +297,9 @@
   color: var(--fg);
 }
 .voice-btn.recording {
-  color: var(--warm);
-  border-color: var(--warm);
-  background: var(--warm-soft);
+  color: var(--task);
+  border-color: var(--task);
+  background: var(--task-soft);
 }
 .voice-btn.downloading {
   width: auto;
@@ -318,7 +318,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--warm);
+  background: var(--task);
   animation: voice-pulse 1.4s ease-in-out infinite;
 }
 @keyframes voice-pulse {

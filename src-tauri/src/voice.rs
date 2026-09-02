@@ -7,8 +7,8 @@ use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use tauri::{AppHandle, Emitter, Manager};
 use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
 
-const MODEL_URL: &str = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-small.bin";
-const MODEL_FILE_NAME: &str = "ggml-small.bin";
+const MODEL_URL: &str = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin";
+const MODEL_FILE_NAME: &str = "ggml-base.bin";
 const WHISPER_SAMPLE_RATE: u32 = 16000;
 
 /// `cpal::Stream` is deliberately `!Send` (thread-affinity on some audio
@@ -87,8 +87,24 @@ struct ModelProgress {
     total: u64,
 }
 
+/// Removes model files left behind by a previous default (e.g. switching
+/// from the "small" to the "base" model shouldn't leave a stale ~466 MB
+/// blob sitting in the user's app data directory forever).
+fn cleanup_stale_models(app: &AppHandle) {
+    let Ok(dir) = model_dir(app) else { return };
+    let Ok(entries) = std::fs::read_dir(&dir) else { return };
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let Some(name) = name.to_str() else { continue };
+        if name != MODEL_FILE_NAME && name.starts_with("ggml-") && name.ends_with(".bin") {
+            let _ = std::fs::remove_file(entry.path());
+        }
+    }
+}
+
 #[tauri::command]
 pub async fn download_voice_model(app: AppHandle) -> Result<(), String> {
+    cleanup_stale_models(&app);
     let final_path = model_path(&app)?;
     if final_path.exists() {
         return Ok(());
@@ -256,9 +272,9 @@ fn run_processing_loop(
     language: String,
 ) {
     const SILENCE_RMS: f32 = 0.012;
-    const SILENCE_HOLD_MS: u128 = 400;
-    const MIN_SEGMENT_MS: u128 = 350;
-    const MAX_SEGMENT_MS: u128 = 5000;
+    const SILENCE_HOLD_MS: u128 = 350;
+    const MIN_SEGMENT_MS: u128 = 300;
+    const MAX_SEGMENT_MS: u128 = 3500;
     const NO_AUDIO_HINT_MS: u128 = 6000;
 
     let mut segment: Vec<f32> = Vec::new();

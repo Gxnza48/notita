@@ -26,7 +26,7 @@ export function VoiceButton() {
         : "Stop voice note"
       : modelReady
         ? "Start voice note (Ctrl Shift V)"
-        : "Start voice note — downloads a one-time speech model (~466 MB)";
+        : "Start voice note — downloads a one-time speech model (~150 MB)";
 
   return (
     <div className="voice-wrap">
