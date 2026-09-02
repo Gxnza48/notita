@@ -243,18 +243,29 @@ fn flush_segment(segment: &mut Vec<f32>, ctx: &WhisperContext, app: &AppHandle, 
         return;
     }
     let sample_count = segment.len();
+    let audio_ms = (sample_count as u128 * 1000) / input_rate as u128;
     let resampled = resample_to_16k(segment, input_rate);
     segment.clear();
-    match transcribe(ctx, &resampled, language) {
+    let started = std::time::Instant::now();
+    let result = transcribe(ctx, &resampled, language);
+    let elapsed_ms = started.elapsed().as_millis();
+    let rtf = if audio_ms > 0 { elapsed_ms as f32 / audio_ms as f32 } else { 0.0 };
+    match result {
         Ok(text) if !text.is_empty() => {
-            log_voice(app, &format!("segment ({sample_count} samples) -> \"{text}\""));
+            log_voice(
+                app,
+                &format!("segment: {audio_ms}ms audio, transcribed in {elapsed_ms}ms (rtf={rtf:.2}) -> \"{text}\""),
+            );
             let _ = app.emit("voice-segment", VoiceSegment { text });
         }
         Ok(_) => {
-            log_voice(app, &format!("segment ({sample_count} samples) -> empty transcription"));
+            log_voice(
+                app,
+                &format!("segment: {audio_ms}ms audio, transcribed in {elapsed_ms}ms (rtf={rtf:.2}) -> empty transcription"),
+            );
         }
         Err(e) => {
-            log_voice(app, &format!("transcription error: {e}"));
+            log_voice(app, &format!("transcription error after {elapsed_ms}ms: {e}"));
         }
     }
 }
@@ -263,6 +274,16 @@ fn flush_segment(segment: &mut Vec<f32>, ctx: &WhisperContext, app: &AppHandle, 
 /// boundary, and transcribes each completed segment — this reads as
 /// "real-time" for dictation without needing true streaming inference,
 /// which whisper.cpp isn't built for.
+///
+/// Segment/silence duration are tracked by SAMPLE COUNT, not wall-clock
+/// `Instant`s. If transcription ever falls behind real time, the mpsc
+/// channel queues up a backlog that then drains in a near-instant burst
+/// once `flush_segment` returns — wall-clock timers barely move during
+/// that burst, so a wall-clock-based flush condition would never fire
+/// and segments would grow without bound (compounding the very lag
+/// they're supposed to prevent). Audio-sample-based timing stays
+/// correct regardless of how far behind the processing loop gets: each
+/// segment is still capped at MAX_SEGMENT_MS of actual audio.
 fn run_processing_loop(
     rx: std::sync::mpsc::Receiver<Vec<f32>>,
     stop_flag: Arc<AtomicBool>,
@@ -272,15 +293,17 @@ fn run_processing_loop(
     language: String,
 ) {
     const SILENCE_RMS: f32 = 0.012;
-    const SILENCE_HOLD_MS: u128 = 350;
-    const MIN_SEGMENT_MS: u128 = 300;
-    const MAX_SEGMENT_MS: u128 = 3500;
+    const SILENCE_HOLD_MS: u128 = 450;
+    const MIN_SEGMENT_MS: u128 = 400;
+    const MAX_SEGMENT_MS: u128 = 4000;
     const NO_AUDIO_HINT_MS: u128 = 6000;
+
+    let samples_to_ms = |samples: usize| -> u128 { (samples as u128 * 1000) / input_rate as u128 };
 
     let mut segment: Vec<f32> = Vec::new();
     let mut speaking = false;
-    let mut silence_since: Option<std::time::Instant> = None;
-    let mut segment_started: Option<std::time::Instant> = None;
+    let mut silence_samples: usize = 0;
+    let mut segment_samples: usize = 0;
     let recording_started = std::time::Instant::now();
     let mut ever_spoke = false;
     let mut hinted_no_audio = false;
@@ -296,21 +319,19 @@ fn run_processing_loop(
                 if rms > peak_rms_seen {
                     peak_rms_seen = rms;
                 }
+                segment_samples += chunk.len();
                 segment.extend_from_slice(&chunk);
-                if segment_started.is_none() {
-                    segment_started = Some(std::time::Instant::now());
-                }
 
                 if rms > SILENCE_RMS {
                     speaking = true;
                     ever_spoke = true;
-                    silence_since = None;
-                } else if speaking && silence_since.is_none() {
-                    silence_since = Some(std::time::Instant::now());
+                    silence_samples = 0;
+                } else if speaking {
+                    silence_samples += chunk.len();
                 }
 
-                let segment_ms = segment_started.map(|s| s.elapsed().as_millis()).unwrap_or(0);
-                let silence_ms = silence_since.map(|s| s.elapsed().as_millis()).unwrap_or(0);
+                let segment_ms = samples_to_ms(segment_samples);
+                let silence_ms = samples_to_ms(silence_samples);
 
                 let should_flush = speaking
                     && segment_ms > MIN_SEGMENT_MS
@@ -319,8 +340,8 @@ fn run_processing_loop(
                 if should_flush {
                     flush_segment(&mut segment, &ctx, &app, input_rate, &language);
                     speaking = false;
-                    silence_since = None;
-                    segment_started = None;
+                    silence_samples = 0;
+                    segment_samples = 0;
                 }
             }
             Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {}
