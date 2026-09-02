@@ -31,10 +31,10 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.error) {
       return (
         <div className="crash-screen">
-          <p className="crash-title">Something went wrong.</p>
+          <p className="crash-title">Algo salió mal.</p>
           <p className="crash-message">{this.state.error.message}</p>
           <button className="crash-reload" onClick={() => window.location.reload()}>
-            Reload
+            Recargar
           </button>
         </div>
       );

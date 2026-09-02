@@ -50,15 +50,15 @@ export function CommandPalette() {
       run: c.run!,
     }));
 
-    list.push({ id: "settings", label: "Open settings", run: () => setSettingsOpen(true) });
+    list.push({ id: "settings", label: "Abrir configuración", run: () => setSettingsOpen(true) });
     list.push({
       id: "toggle-theme",
-      label: resolveTheme(theme) === "dark" ? "Switch to Light mode" : "Switch to Dark mode",
+      label: resolveTheme(theme) === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro",
       run: () => setThemeFn(resolveTheme(theme) === "dark" ? "light" : "dark"),
     });
     list.push({
       id: "check-updates",
-      label: "Check for updates",
+      label: "Buscar actualizaciones",
       run: () => {
         setSettingsOpen(true);
         useUpdaterStore.getState().checkForUpdates();
@@ -69,7 +69,7 @@ export function CommandPalette() {
       if (note.id === currentNote?.id) continue;
       list.push({
         id: `open-${note.id}`,
-        label: `Open: ${note.title || "Untitled"}`,
+        label: `Abrir: ${note.title || "Sin título"}`,
         hint: note.subject_name,
         run: async () => {
           setView({ kind: "subject", subjectId: note.subject_id });
@@ -82,10 +82,10 @@ export function CommandPalette() {
     if (currentNote) {
       list.push({
         id: "export-md",
-        label: "Export note as Markdown",
+        label: "Exportar nota como Markdown",
         run: async () => {
           const path = await save({
-            defaultPath: `${currentNote.title || "untitled"}.md`,
+            defaultPath: `${currentNote.title || "sin-titulo"}.md`,
             filters: [{ name: "Markdown", extensions: ["md"] }],
           });
           if (path) await api.exportTextFile(path, htmlToMarkdown(currentNote.content));
@@ -93,18 +93,18 @@ export function CommandPalette() {
       });
       list.push({
         id: "export-txt",
-        label: "Export note as TXT",
+        label: "Exportar nota como TXT",
         run: async () => {
           const path = await save({
-            defaultPath: `${currentNote.title || "untitled"}.txt`,
-            filters: [{ name: "Text", extensions: ["txt"] }],
+            defaultPath: `${currentNote.title || "sin-titulo"}.txt`,
+            filters: [{ name: "Texto", extensions: ["txt"] }],
           });
           if (path) await api.exportTextFile(path, currentNote.content_text);
         },
       });
       list.push({
         id: "export-pdf",
-        label: "Export note as PDF",
+        label: "Exportar nota como PDF",
         run: () => {
           setCommandPaletteOpen(false);
           window.setTimeout(() => window.print(), 60);
@@ -114,7 +114,7 @@ export function CommandPalette() {
 
     list.push({
       id: "minimize",
-      label: "Minimize window",
+      label: "Minimizar ventana",
       run: () => getCurrentWindow().minimize(),
     });
 
@@ -144,7 +144,7 @@ export function CommandPalette() {
         <input
           ref={inputRef}
           className="palette-input"
-          placeholder="Type a command…"
+          placeholder="Escribí un comando…"
           value={query}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -168,7 +168,7 @@ export function CommandPalette() {
             {cmd.hint && <kbd>{cmd.hint}</kbd>}
           </button>
         ))}
-        {filtered.length === 0 && <div className="palette-empty">No matching commands</div>}
+        {filtered.length === 0 && <div className="palette-empty">Ningún comando coincide</div>}
       </div>
     </Modal>
   );

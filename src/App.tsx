@@ -8,6 +8,7 @@ import { CommandPalette } from "./components/CommandPalette";
 import { SearchModal } from "./components/SearchModal";
 import { SettingsPanel } from "./components/SettingsPanel";
 import { UpdateBanner } from "./components/UpdateBanner";
+import { ToastHost } from "./components/Toast";
 import { useDataStore } from "./lib/dataStore";
 import { useUiStore } from "./lib/uiStore";
 import { useSettingsStore } from "./lib/settingsStore";
@@ -109,10 +110,10 @@ export default function App() {
   if (bootError) {
     return (
       <div className="crash-screen">
-        <p className="crash-title">Couldn't load your notes.</p>
+        <p className="crash-title">No se pudieron cargar tus notas.</p>
         <p className="crash-message">{bootError}</p>
         <button className="crash-reload" onClick={() => setBootAttempt((n) => n + 1)}>
-          Retry
+          Reintentar
         </button>
       </div>
     );
@@ -134,6 +135,7 @@ export default function App() {
       {searchOpen && <SearchModal />}
       {settingsOpen && <SettingsPanel />}
       <UpdateBanner />
+      <ToastHost />
     </div>
   );
 }

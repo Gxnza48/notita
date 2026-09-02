@@ -68,7 +68,7 @@ a {
 }
 
 ::selection {
-  background: var(--accent-soft);
+  background: var(--selection-bg, var(--accent-soft));
   color: var(--fg);
 }
 
@@ -112,6 +112,9 @@ a {
 }
 .icon-btn:active {
   background: var(--surface-active);
+}
+.icon-btn.copied {
+  color: var(--task);
 }
 
 .text-btn {

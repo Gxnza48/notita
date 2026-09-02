@@ -4,7 +4,7 @@ import { useDataStore } from "./dataStore";
 import { flushEditor } from "./editorBridge";
 import { useVoiceStore } from "./voiceStore";
 
-export type CommandCategory = "General" | "Notes" | "Navigation" | "Windows";
+export type CommandCategory = "General" | "Notas" | "Navegación" | "Ventanas";
 
 export interface ShortcutKey {
   ctrl?: boolean;
@@ -54,16 +54,16 @@ async function runQuickCapture() {
 export const COMMANDS: CommandDefinition[] = [
   {
     id: "new-note",
-    label: "New note",
-    category: "Notes",
+    label: "Nueva nota",
+    category: "Notas",
     shortcut: { ctrl: true, key: "n", display: "Ctrl N" },
     run: runNewNote,
     skipWhenModalOpen: true,
   },
   {
     id: "new-subject",
-    label: "New subject",
-    category: "Notes",
+    label: "Nueva materia",
+    category: "Notas",
     shortcut: { ctrl: true, shift: true, key: "n", display: "Ctrl Shift N" },
     run: () => {
       useUiStore.getState().setSidebarCollapsed(false);
@@ -72,49 +72,49 @@ export const COMMANDS: CommandDefinition[] = [
   },
   {
     id: "search",
-    label: "Search notes",
-    category: "Navigation",
+    label: "Buscar notas",
+    category: "Navegación",
     shortcut: { ctrl: true, key: "k", display: "Ctrl K" },
     run: () => useUiStore.getState().setSearchOpen(true),
   },
   {
     id: "command-palette",
-    label: "Command palette",
+    label: "Paleta de comandos",
     category: "General",
     shortcut: { ctrl: true, key: "p", display: "Ctrl P" },
     run: () => useUiStore.getState().setCommandPaletteOpen(true),
   },
   {
     id: "save",
-    label: "Save",
+    label: "Guardar",
     category: "General",
     shortcut: { ctrl: true, key: "s", display: "Ctrl S" },
     run: () => flushEditor(),
   },
   {
     id: "focus-mode",
-    label: "Toggle Focus Mode",
+    label: "Alternar modo enfoque",
     category: "General",
     shortcut: { key: "F11", display: "F11" },
     run: () => useUiStore.getState().toggleFocusMode(),
   },
   {
     id: "quick-capture",
-    label: "Quick Capture",
-    category: "Windows",
+    label: "Captura rápida",
+    category: "Ventanas",
     shortcut: { ctrl: true, alt: true, code: "Space", display: "Ctrl Alt Space" },
     run: runQuickCapture,
   },
   {
     id: "voice-note",
-    label: "Voice note",
-    category: "Notes",
+    label: "Nota de voz",
+    category: "Notas",
     shortcut: { ctrl: true, shift: true, key: "v", display: "Ctrl Shift V" },
     run: () => useVoiceStore.getState().toggleRecording(),
   },
   {
     id: "close-modal",
-    label: "Close modal",
+    label: "Cerrar ventana",
     category: "General",
     shortcut: { key: "Escape", display: "Esc" },
     // Each modal closes itself on Escape (see Modal.tsx) — listed here only

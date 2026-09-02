@@ -12,9 +12,9 @@ import { FONT_OPTIONS } from "../lib/fontOptions";
 import type { CustomColors } from "../lib/themeCustomization";
 
 const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
-  { value: "system", label: "System" },
-  { value: "dark", label: "Dark" },
-  { value: "light", label: "Light" },
+  { value: "system", label: "Sistema" },
+  { value: "dark", label: "Oscuro" },
+  { value: "light", label: "Claro" },
 ];
 
 const VOICE_LANGUAGE_OPTIONS: { value: VoiceLanguage; label: string }[] = [
@@ -23,7 +23,7 @@ const VOICE_LANGUAGE_OPTIONS: { value: VoiceLanguage; label: string }[] = [
   { value: "auto", label: "Auto" },
 ];
 
-const CATEGORY_ORDER: CommandCategory[] = ["General", "Notes", "Navigation", "Windows"];
+const CATEGORY_ORDER: CommandCategory[] = ["General", "Notas", "Navegación", "Ventanas"];
 
 export function SettingsPanel() {
   const setSettingsOpen = useUiStore((s) => s.setSettingsOpen);
@@ -35,6 +35,8 @@ export function SettingsPanel() {
   const setCustomColors = useUiStore((s) => s.setCustomColors);
   const fontId = useUiStore((s) => s.fontId);
   const setFontId = useUiStore((s) => s.setFontId);
+  const selectionColor = useUiStore((s) => s.selectionColor);
+  const setSelectionColor = useUiStore((s) => s.setSelectionColor);
 
   const fontSize = useSettingsStore((s) => s.fontSize);
   const lineHeight = useSettingsStore((s) => s.lineHeight);
@@ -53,10 +55,10 @@ export function SettingsPanel() {
   return (
     <Modal onClose={() => setSettingsOpen(false)}>
       <div className="settings-panel">
-        <div className="settings-header">Settings</div>
+        <div className="settings-header">Configuración</div>
 
         <div className="settings-group">
-          <div className="settings-group-title">Appearance</div>
+          <div className="settings-group-title">Apariencia</div>
           <div className="segmented">
             {THEME_OPTIONS.map((opt) => (
               <button
@@ -71,14 +73,14 @@ export function SettingsPanel() {
         </div>
 
         <div className="settings-group">
-          <div className="settings-group-title">Theme</div>
+          <div className="settings-group-title">Tema</div>
           <div className="theme-swatch-grid">
             <button
               type="button"
               className={"theme-swatch theme-swatch-default" + (themePresetId === "default" ? " active" : "")}
               onClick={() => setThemePresetId("default")}
-              title="Default (pure black / pure white)"
-              aria-label="Default theme"
+              title="Predeterminado (negro / blanco puro)"
+              aria-label="Tema predeterminado"
             />
             {THEME_PRESETS.map((preset) => (
               <button
@@ -97,19 +99,35 @@ export function SettingsPanel() {
               type="button"
               className={"theme-swatch theme-swatch-custom" + (themePresetId === "custom" ? " active" : "")}
               onClick={() => setThemePresetId("custom")}
-              title="Custom"
-              aria-label="Custom theme"
+              title="Personalizado"
+              aria-label="Tema personalizado"
             />
           </div>
           {themePresetId === "custom" && (
             <CustomColorPicker colors={customColors} onChange={setCustomColors} />
           )}
+          <div className="settings-row">
+            <span>Color de selección</span>
+            <div className="settings-row-control">
+              <input
+                type="color"
+                className="selection-color-input"
+                value={selectionColor ?? "#168fc0"}
+                onChange={(e) => setSelectionColor(e.target.value)}
+              />
+              {selectionColor && (
+                <button className="text-btn" onClick={() => setSelectionColor(null)}>
+                  Restablecer
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="settings-group">
           <div className="settings-group-title">Editor</div>
           <div className="settings-row">
-            <span>Font</span>
+            <span>Fuente</span>
             <div className="segmented segmented-wrap">
               {FONT_OPTIONS.map((opt) => (
                 <button
@@ -124,7 +142,7 @@ export function SettingsPanel() {
             </div>
           </div>
           <div className="settings-row">
-            <span>Font size</span>
+            <span>Tamaño de fuente</span>
             <div className="settings-row-control">
               <input
                 type="range"
@@ -137,7 +155,7 @@ export function SettingsPanel() {
             </div>
           </div>
           <div className="settings-row">
-            <span>Line height</span>
+            <span>Interlineado</span>
             <div className="settings-row-control">
               <input
                 type="range"
@@ -153,9 +171,9 @@ export function SettingsPanel() {
         </div>
 
         <div className="settings-group">
-          <div className="settings-group-title">Voice</div>
+          <div className="settings-group-title">Voz</div>
           <div className="settings-row">
-            <span>Dictation language</span>
+            <span>Idioma de dictado</span>
             <div className="segmented">
               {VOICE_LANGUAGE_OPTIONS.map((opt) => (
                 <button
@@ -171,13 +189,13 @@ export function SettingsPanel() {
         </div>
 
         <div className="settings-group">
-          <div className="settings-group-title">Behavior</div>
+          <div className="settings-group-title">Comportamiento</div>
           <label className="settings-row settings-toggle-row">
-            <span>Open last note on launch</span>
+            <span>Abrir la última nota al iniciar</span>
             <input type="checkbox" checked={openLastNote} onChange={(e) => setOpenLastNote(e.target.checked)} />
           </label>
           <label className="settings-row settings-toggle-row">
-            <span>Start with Windows</span>
+            <span>Iniciar con Windows</span>
             <input
               type="checkbox"
               checked={startWithWindows}
@@ -185,17 +203,17 @@ export function SettingsPanel() {
             />
           </label>
           <label className="settings-row settings-toggle-row">
-            <span>Minimize to tray on close</span>
+            <span>Minimizar a la bandeja al cerrar</span>
             <input type="checkbox" checked={closeToTray} onChange={(e) => setCloseToTray(e.target.checked)} />
           </label>
           <div className="settings-row settings-static">
-            <span>Autosave</span>
-            <span className="settings-value">Always on</span>
+            <span>Guardado automático</span>
+            <span className="settings-value">Siempre activo</span>
           </div>
         </div>
 
         <div className="settings-group">
-          <div className="settings-group-title">Keyboard Shortcuts</div>
+          <div className="settings-group-title">Atajos de teclado</div>
           {CATEGORY_ORDER.map((category) => {
             const items = COMMANDS.filter((c) => c.category === category && c.shortcut);
             if (items.length === 0) return null;
@@ -236,15 +254,15 @@ function CustomColorPicker({
     <div className="theme-custom-colors">
       <label className="theme-color-field">
         <input type="color" value={value.bg} onChange={(e) => set({ bg: e.target.value })} />
-        <span>Background</span>
+        <span>Fondo</span>
       </label>
       <label className="theme-color-field">
         <input type="color" value={value.fg} onChange={(e) => set({ fg: e.target.value })} />
-        <span>Text</span>
+        <span>Texto</span>
       </label>
       <label className="theme-color-field">
         <input type="color" value={value.accent} onChange={(e) => set({ accent: e.target.value })} />
-        <span>Accent</span>
+        <span>Acento</span>
       </label>
     </div>
   );
@@ -266,32 +284,32 @@ function UpdatesSection() {
 
   return (
     <div className="settings-group">
-      <div className="settings-group-title">Updates</div>
+      <div className="settings-group-title">Actualizaciones</div>
       <div className="settings-row">
-        <span>Version</span>
+        <span>Versión</span>
         <span className="settings-value">{currentVersion ? `${currentVersion}` : "…"}</span>
       </div>
 
       {status === "idle" && (
         <button className="text-btn update-check-btn" onClick={checkForUpdates}>
-          Check for updates
+          Buscar actualizaciones
         </button>
       )}
-      {status === "checking" && <div className="update-status">Checking for updates…</div>}
+      {status === "checking" && <div className="update-status">Buscando actualizaciones…</div>}
       {status === "up-to-date" && (
         <div className="update-status">
-          You're up to date.
+          Estás al día.
           <button className="text-btn update-recheck-btn" onClick={checkForUpdates}>
-            Check again
+            Volver a buscar
           </button>
         </div>
       )}
       {status === "available" && (
         <div className="update-available">
-          <div className="update-available-title">Version {latestVersion} is available</div>
+          <div className="update-available-title">La versión {latestVersion} está disponible</div>
           {notes && <div className="update-notes">{notes}</div>}
           <button className="confirm-btn confirm-btn-danger update-install-btn" onClick={installUpdate}>
-            Install &amp; Restart
+            Instalar y reiniciar
           </button>
         </div>
       )}
@@ -300,15 +318,15 @@ function UpdatesSection() {
           <div className="update-progress-track">
             <div className="update-progress-fill" style={{ width: `${progress}%` }} />
           </div>
-          Downloading… {progress}%
+          Descargando… {progress}%
         </div>
       )}
-      {status === "ready" && <div className="update-status">Installed. Restarting…</div>}
+      {status === "ready" && <div className="update-status">Instalada. Reiniciando…</div>}
       {status === "error" && (
         <div className="update-status update-error">
-          Couldn't check for updates{errorMessage ? `: ${errorMessage}` : "."}
+          No se pudo buscar actualizaciones{errorMessage ? `: ${errorMessage}` : "."}
           <button className="text-btn update-recheck-btn" onClick={checkForUpdates}>
-            Retry
+            Reintentar
           </button>
         </div>
       )}

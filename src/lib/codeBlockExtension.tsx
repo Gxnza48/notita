@@ -23,7 +23,7 @@ function CodeBlockView({ node }: NodeViewProps) {
         type="button"
         className={"code-block-copy" + (copied ? " copied" : "")}
         onClick={handleCopy}
-        aria-label={copied ? "Copied" : "Copy code"}
+        aria-label={copied ? "Copiado" : "Copiar código"}
         contentEditable={false}
       >
         {copied ? <CheckIcon size={12} /> : <CopyIcon size={12} />}

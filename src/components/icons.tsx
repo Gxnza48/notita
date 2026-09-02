@@ -35,16 +35,25 @@ export function ChevronIcon({ dir, size = 14 }: { dir: "left" | "right" } & Icon
   );
 }
 
+const GEAR_TEETH = [0, 60, 120, 180, 240, 300];
+
 export function GearIcon({ size = 14 }: IconProps) {
   return (
     <svg width={size} height={size} viewBox="0 0 14 14" fill="none">
-      <circle cx="7" cy="7" r="2.1" stroke="currentColor" strokeWidth={STROKE} />
-      <path
-        d="M7 1.3v1.3M7 11.4v1.3M12.7 7h-1.3M2.6 7H1.3M11 3l-.9.9M3.9 10.1l-.9.9M11 11l-.9-.9M3.9 3.9L3 3"
-        stroke="currentColor"
-        strokeWidth={STROKE}
-        strokeLinecap="round"
-      />
+      {GEAR_TEETH.map((deg) => (
+        <rect
+          key={deg}
+          x="6.35"
+          y="1.6"
+          width="1.3"
+          height="1.7"
+          rx="0.35"
+          fill="currentColor"
+          transform={`rotate(${deg} 7 7)`}
+        />
+      ))}
+      <circle cx="7" cy="7" r="4" stroke="currentColor" strokeWidth={STROKE} />
+      <circle cx="7" cy="7" r="1.7" fill="currentColor" />
     </svg>
   );
 }

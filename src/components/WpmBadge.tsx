@@ -42,25 +42,25 @@ export function WpmBadge() {
     <div className="wpm-wrap">
       {showStats && visible && (
         <div className="wpm-stats-panel">
-          <div className="wpm-stats-title">Session</div>
+          <div className="wpm-stats-title">Sesión</div>
           <div className="wpm-stats-row">
-            <span>Average</span>
-            <span>{sessionAverage} WPM</span>
+            <span>Promedio</span>
+            <span>{sessionAverage} PPM</span>
           </div>
           <div className="wpm-stats-row">
-            <span>Peak</span>
-            <span>{sessionPeak} WPM</span>
+            <span>Máximo</span>
+            <span>{sessionPeak} PPM</span>
           </div>
           <div className="wpm-stats-row">
-            <span>Characters</span>
-            <span>{sessionChars.toLocaleString()}</span>
+            <span>Caracteres</span>
+            <span>{sessionChars.toLocaleString("es-419")}</span>
           </div>
           {bestWpm > 0 && (
             <>
-              <div className="wpm-stats-title wpm-stats-title-spaced">Your best</div>
+              <div className="wpm-stats-title wpm-stats-title-spaced">Tu mejor marca</div>
               <div className="wpm-stats-row wpm-stats-best">
                 <span>
-                  {glyphFor(bestWpm)} {bestWpm} WPM
+                  {glyphFor(bestWpm)} {bestWpm} PPM
                 </span>
               </div>
             </>
@@ -75,7 +75,7 @@ export function WpmBadge() {
       >
         {glyph && <span className="wpm-glyph">{glyph}</span>}
         <span className="wpm-value">{wpm}</span>
-        <span className="wpm-unit">WPM</span>
+        <span className="wpm-unit">PPM</span>
       </button>
     </div>
   );

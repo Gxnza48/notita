@@ -15,11 +15,19 @@ function clamp(pos: number, size: number): number {
 /**
  * Applies `mutate` at every active cursor (all secondaries + the primary
  * selection head) within a single transaction, processed from the highest
- * document position to the lowest. An edit at a higher position can only
- * ever affect content at or above its own start — never below it — so a
- * not-yet-processed lower position stays valid without needing to remap it
- * through the steps already added. `mutate` returns the new position for
- * whatever point it was given.
+ * document position to the lowest so an edit never invalidates the
+ * still-to-be-edited *positions* of the points after it in the loop.
+ *
+ * That alone isn't enough, though: `mutate` returns each point's new
+ * position as of right after ITS OWN edit — but a point processed earlier
+ * (at a higher position) can still be shifted by a point processed LATER
+ * (at a lower position, e.g. an earlier line growing), since inserting
+ * before something always pushes it forward. So each result is recorded
+ * together with how many steps existed at the time, then remapped through
+ * only the steps added AFTER it (`tr.mapping.slice(afterStepIndex)`) once
+ * every edit is in. Skipping this is what caused v1's "types backwards"
+ * bug: naive `pos + text.length` arithmetic went stale the moment a
+ * different cursor's edit landed earlier in the document.
  */
 function applyAtAllCursors(view: EditorView, mutate: (tr: Transaction, pos: number) => number): boolean {
   const st = multiCursorKey.getState(view.state);
@@ -29,14 +37,20 @@ function applyAtAllCursors(view: EditorView, mutate: (tr: Transaction, pos: numb
   const positions = Array.from(new Set([...st.secondaries, primaryHead])).sort((a, b) => b - a);
 
   const tr = view.state.tr;
-  const resultByOriginal = new Map<number, number>();
+  const rawByOriginal = new Map<number, { pos: number; afterStepIndex: number }>();
   for (const pos of positions) {
-    resultByOriginal.set(pos, mutate(tr, pos));
+    const newPos = mutate(tr, pos);
+    rawByOriginal.set(pos, { pos: newPos, afterStepIndex: tr.mapping.maps.length });
   }
 
   const size = tr.doc.content.size;
-  const newPrimary = clamp(resultByOriginal.get(primaryHead)!, size);
-  const newSecondaries = positions.filter((p) => p !== primaryHead).map((p) => clamp(resultByOriginal.get(p)!, size));
+  const finalByOriginal = new Map<number, number>();
+  for (const [orig, { pos, afterStepIndex }] of rawByOriginal) {
+    finalByOriginal.set(orig, clamp(tr.mapping.slice(afterStepIndex).map(pos), size));
+  }
+
+  const newPrimary = finalByOriginal.get(primaryHead)!;
+  const newSecondaries = positions.filter((p) => p !== primaryHead).map((p) => finalByOriginal.get(p)!);
 
   tr.setSelection(TextSelection.near(tr.doc.resolve(newPrimary)));
   tr.setMeta(multiCursorKey, newSecondaries);
@@ -44,6 +58,7 @@ function applyAtAllCursors(view: EditorView, mutate: (tr: Transaction, pos: numb
   return true;
 }
 
+/** Same remap-through-later-steps fix as `applyAtAllCursors`, specialized for text input since the primary cursor may carry a real (from,to) range while secondaries are always collapsed points. */
 function applyInsertText(view: EditorView, from: number, to: number, text: string): boolean {
   const st = multiCursorKey.getState(view.state);
   if (!st || st.secondaries.length === 0) return false;
@@ -55,15 +70,20 @@ function applyInsertText(view: EditorView, from: number, to: number, text: strin
   ].sort((a, b) => b.from - a.from);
 
   const tr = view.state.tr;
-  const resultByKey = new Map<number, number>();
+  const rawByKey = new Map<number, { pos: number; afterStepIndex: number }>();
   for (const pt of points) {
     tr.insertText(text, pt.from, pt.to);
-    resultByKey.set(pt.key, pt.from + text.length);
+    rawByKey.set(pt.key, { pos: pt.from + text.length, afterStepIndex: tr.mapping.maps.length });
   }
 
   const size = tr.doc.content.size;
-  const newPrimary = clamp(resultByKey.get(primaryHead)!, size);
-  const newSecondaries = st.secondaries.map((p) => clamp(resultByKey.get(p)!, size));
+  const finalByKey = new Map<number, number>();
+  for (const [key, { pos, afterStepIndex }] of rawByKey) {
+    finalByKey.set(key, clamp(tr.mapping.slice(afterStepIndex).map(pos), size));
+  }
+
+  const newPrimary = finalByKey.get(primaryHead)!;
+  const newSecondaries = st.secondaries.map((p) => finalByKey.get(p)!);
 
   tr.setSelection(TextSelection.near(tr.doc.resolve(newPrimary)));
   tr.setMeta(multiCursorKey, newSecondaries);

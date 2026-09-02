@@ -95,18 +95,18 @@ export default function QuickCaptureApp() {
 
   return (
     <div className="quick-capture" onBlur={() => text.trim() && save()}>
-      <div className="quick-capture-label">Quick note</div>
+      <div className="quick-capture-label">Nota rápida</div>
       <textarea
         ref={textareaRef}
         className="quick-capture-input"
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Type something worth remembering…"
+        placeholder="Escribí algo que valga la pena recordar…"
         rows={2}
       />
       <div className="quick-capture-hint">
-        <kbd>Enter</kbd> save · <kbd>Esc</kbd> discard
+        <kbd>Enter</kbd> guardar · <kbd>Esc</kbd> descartar
       </div>
     </div>
   );

@@ -30,29 +30,29 @@ export function Onboarding() {
             notita<span className="brand-dot">.</span>
           </div>
           <p className="onboarding-tagline">
-            Your notes.
+            Tus notas.
             <br />
-            Your classes.
+            Tus materias.
             <br />
-            Your flow.
+            Tu ritmo.
           </p>
           <button className="onboarding-cta" onClick={() => setStep("subject")}>
-            Get started
+            Empezar
           </button>
         </div>
       ) : (
         <div className="onboarding-card" key="subject">
-          <div className="onboarding-step-title">What's your first class?</div>
+          <div className="onboarding-step-title">¿Cuál es tu primera materia?</div>
           <input
             autoFocus
             className="onboarding-input"
-            placeholder="e.g. Mathematics"
+            placeholder="p. ej. Matemática"
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleCreate()}
           />
           <button className="onboarding-cta" onClick={handleCreate} disabled={!name.trim() || busy}>
-            Start writing
+            Empezar a escribir
           </button>
         </div>
       )}

@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { CheckIcon } from "./icons";
 
 export interface ContextMenuItem {
   id: string;
@@ -6,6 +7,8 @@ export interface ContextMenuItem {
   onSelect: () => void;
   destructive?: boolean;
   separatorBefore?: boolean;
+  /** Shows a checkmark next to the label — for a toggle whose current state (e.g. "bold is on") is worth surfacing. */
+  checked?: boolean;
 }
 
 export interface ContextMenuPosition {
@@ -90,7 +93,8 @@ export function ContextMenu({
               onClose();
             }}
           >
-            {item.label}
+            <span className="context-menu-item-label">{item.label}</span>
+            {item.checked && <CheckIcon size={11} />}
           </button>
         </div>
       ))}

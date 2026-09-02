@@ -74,14 +74,14 @@ export function SearchModal() {
         <input
           ref={inputRef}
           className="palette-input"
-          placeholder="Search titles, content, subjects…"
+          placeholder="Buscar títulos, contenido, materias…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
         />
       </div>
       <div className="palette-list">
-        {query.trim() && results.length === 0 && <div className="palette-empty">No results</div>}
+        {query.trim() && results.length === 0 && <div className="palette-empty">Sin resultados</div>}
         {results.map((hit, i) => (
           <button
             key={hit.note_id}
@@ -90,7 +90,7 @@ export function SearchModal() {
             onClick={() => select(hit)}
           >
             <div className="palette-item-top">
-              <span className="palette-item-title">{highlight(hit.title || "Untitled", query)}</span>
+              <span className="palette-item-title">{highlight(hit.title || "Sin título", query)}</span>
               <span className="palette-item-subject">{hit.subject_name}</span>
             </div>
             <div className="palette-item-snippet">{highlight(hit.snippet, query)}</div>

@@ -19,14 +19,14 @@ export function VoiceButton() {
   }, [modelReady, checkModelStatus]);
 
   const label = downloading
-    ? `Downloading speech model… ${downloadProgress}%`
+    ? `Descargando modelo de voz… ${downloadProgress}%`
     : recording
       ? deviceName
-        ? `Stop voice note — recording from ${deviceName}`
-        : "Stop voice note"
+        ? `Detener nota de voz — grabando desde ${deviceName}`
+        : "Detener nota de voz"
       : modelReady
-        ? "Start voice note (Ctrl Shift V)"
-        : "Start voice note — downloads a one-time speech model (~150 MB)";
+        ? "Iniciar nota de voz (Ctrl Shift V)"
+        : "Iniciar nota de voz — descarga un modelo de voz único (~150 MB)";
 
   return (
     <div className="voice-wrap">

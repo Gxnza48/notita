@@ -114,7 +114,7 @@ pub async fn download_voice_model(app: AppHandle) -> Result<(), String> {
 
     let mut response = reqwest::get(MODEL_URL).await.map_err(|e| e.to_string())?;
     if !response.status().is_success() {
-        return Err(format!("download failed: HTTP {}", response.status()));
+        return Err(format!("Error al descargar: HTTP {}", response.status()));
     }
     let total = response.content_length().unwrap_or(0);
 
@@ -140,16 +140,16 @@ fn ensure_context(app: &AppHandle, state: &VoiceState) -> Result<Arc<WhisperCont
     let mut guard = state
         .context
         .lock()
-        .map_err(|_| "voice state poisoned".to_string())?;
+        .map_err(|_| "estado de voz corrupto".to_string())?;
     if let Some(ctx) = guard.as_ref() {
         return Ok(ctx.clone());
     }
     let path = model_path(app)?;
     if !path.exists() {
-        return Err("voice model not downloaded".to_string());
+        return Err("el modelo de voz no está descargado".to_string());
     }
     let ctx = WhisperContext::new_with_params(
-        path.to_str().ok_or("invalid model path")?,
+        path.to_str().ok_or("ruta del modelo inválida")?,
         WhisperContextParameters::default(),
     )
     .map_err(|e| e.to_string())?;
@@ -495,7 +495,7 @@ fn run_processing_loop(
             );
             let _ = app.emit(
                 "voice-hint",
-                "No audio detected. Check Windows' default microphone in Settings > Sound > Input — a virtual device (e.g. Voicemod) may be selected instead of your real mic.",
+                "No se detectó audio. Revisá el micrófono predeterminado en Configuración > Sonido > Entrada — puede que esté seleccionado un dispositivo virtual (p. ej. Voicemod) en vez de tu micrófono real.",
             );
         }
     }
@@ -524,7 +524,7 @@ fn record_and_process(
     let host = cpal::default_host();
     let device = host
         .default_input_device()
-        .ok_or_else(|| "no microphone found".to_string())?;
+        .ok_or_else(|| "no se encontró ningún micrófono".to_string())?;
     let device_name = device.name().unwrap_or_else(|_| "unknown device".to_string());
     let config = device.default_input_config().map_err(|e| e.to_string())?;
     let sample_rate = config.sample_rate().0;
@@ -578,7 +578,7 @@ fn record_and_process(
             err_fn,
             None,
         ),
-        other => return Err(format!("unsupported audio format: {other:?}")),
+        other => return Err(format!("formato de audio no compatible: {other:?}")),
     }
     .map_err(|e| e.to_string())?;
 
@@ -599,9 +599,9 @@ pub fn start_voice_recording(
         let active = state
             .stop_flag
             .lock()
-            .map_err(|_| "voice state poisoned".to_string())?;
+            .map_err(|_| "estado de voz corrupto".to_string())?;
         if active.is_some() {
-            return Err("already recording".to_string());
+            return Err("ya se está grabando".to_string());
         }
     }
 
@@ -612,7 +612,7 @@ pub fn start_voice_recording(
         let mut guard = state
             .stop_flag
             .lock()
-            .map_err(|_| "voice state poisoned".to_string())?;
+            .map_err(|_| "estado de voz corrupto".to_string())?;
         *guard = Some(stop_flag.clone());
     }
 
@@ -632,7 +632,7 @@ pub fn stop_voice_recording(state: tauri::State<VoiceState>) -> Result<(), Strin
     let mut guard = state
         .stop_flag
         .lock()
-        .map_err(|_| "voice state poisoned".to_string())?;
+        .map_err(|_| "estado de voz corrupto".to_string())?;
     if let Some(flag) = guard.take() {
         flag.store(true, Ordering::Relaxed);
     }

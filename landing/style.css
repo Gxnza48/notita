@@ -433,6 +433,8 @@ header {
 .wpm-section {
   padding: 88px 0;
   border-top: 1px solid var(--border);
+}
+.wpm-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 56px;
@@ -604,7 +606,7 @@ footer {
 
 @media (max-width: 760px) {
   .marker-grid { grid-template-columns: 1fr 1fr; }
-  .wpm-section { grid-template-columns: 1fr; }
+  .wpm-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 520px) {
   .marker-grid { grid-template-columns: 1fr; }

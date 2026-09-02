@@ -44,23 +44,23 @@ export function EmptyState() {
         <div className="subject-overview-stats">
           <div className="subject-overview-stat">
             <span className="subject-overview-value">{overview.note_count}</span>
-            <span className="subject-overview-label">notes</span>
+            <span className="subject-overview-label">notas</span>
           </div>
           <div className="subject-overview-stat">
             <span className="subject-overview-value">{overview.concept_count}</span>
-            <span className="subject-overview-label">concepts</span>
+            <span className="subject-overview-label">conceptos</span>
           </div>
           <div className="subject-overview-stat">
             <span className="subject-overview-value">{overview.question_count}</span>
-            <span className="subject-overview-label">questions</span>
+            <span className="subject-overview-label">preguntas</span>
           </div>
           <div className="subject-overview-stat">
             <span className="subject-overview-value">{overview.task_count}</span>
-            <span className="subject-overview-label">tasks</span>
+            <span className="subject-overview-label">tareas</span>
           </div>
         </div>
         <button className="text-btn empty-state-cta" onClick={handleCreate}>
-          + New note
+          + Nueva nota
         </button>
       </div>
     );
@@ -68,10 +68,10 @@ export function EmptyState() {
 
   return (
     <div className="empty-state">
-      <p className="empty-state-title">No notes yet.</p>
-      <p className="empty-state-subtitle">Start writing something worth remembering.</p>
+      <p className="empty-state-title">Todavía no hay notas.</p>
+      <p className="empty-state-subtitle">Empezá a escribir algo que valga la pena recordar.</p>
       <button className="text-btn empty-state-cta" onClick={handleCreate}>
-        + New note
+        + Nueva nota
       </button>
     </div>
   );

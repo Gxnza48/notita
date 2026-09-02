@@ -11,13 +11,13 @@ import type { NoteSummary } from "../lib/types";
 function timeAgo(ms: number): string {
   const diff = Date.now() - ms;
   const min = Math.floor(diff / 60000);
-  if (min < 1) return "now";
+  if (min < 1) return "ahora";
   if (min < 60) return `${min}m`;
   const hr = Math.floor(min / 60);
   if (hr < 24) return `${hr}h`;
   const day = Math.floor(hr / 24);
   if (day < 7) return `${day}d`;
-  return new Date(ms).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  return new Date(ms).toLocaleDateString("es-419", { month: "short", day: "numeric" });
 }
 
 type Target = { kind: "note"; note: NoteSummary } | { kind: "subject"; id: string; name: string };
@@ -111,22 +111,22 @@ export function Sidebar() {
   };
 
   const noteMenuItems = (note: NoteSummary): ContextMenuItem[] => [
-    { id: "open", label: "Open", onSelect: () => handleSelectNote(note.id) },
-    { id: "rename", label: "Rename", onSelect: () => setRenamingId(note.id) },
-    { id: "duplicate", label: "Duplicate", onSelect: () => handleDuplicateNote(note) },
+    { id: "open", label: "Abrir", onSelect: () => handleSelectNote(note.id) },
+    { id: "rename", label: "Renombrar", onSelect: () => setRenamingId(note.id) },
+    { id: "duplicate", label: "Duplicar", onSelect: () => handleDuplicateNote(note) },
     {
       id: "delete",
-      label: "Delete",
+      label: "Eliminar",
       destructive: true,
       separatorBefore: true,
       onSelect: () => setConfirmTarget({ kind: "note", note }),
     },
   ];
   const subjectMenuItems = (id: string, name: string): ContextMenuItem[] => [
-    { id: "rename", label: "Rename", onSelect: () => setRenamingId(id) },
+    { id: "rename", label: "Renombrar", onSelect: () => setRenamingId(id) },
     {
       id: "delete",
-      label: "Delete",
+      label: "Eliminar",
       destructive: true,
       separatorBefore: true,
       onSelect: () => setConfirmTarget({ kind: "subject", id, name }),
@@ -136,18 +136,18 @@ export function Sidebar() {
   if (collapsed) {
     return (
       <div className="sidebar collapsed">
-        <Tooltip label="Expand sidebar">
-          <button className="icon-btn" onClick={toggleSidebar} aria-label="Expand sidebar">
+        <Tooltip label="Expandir barra lateral">
+          <button className="icon-btn" onClick={toggleSidebar} aria-label="Expandir barra lateral">
             <ChevronIcon dir="right" />
           </button>
         </Tooltip>
-        <Tooltip label="New note (Ctrl N)">
-          <button className="icon-btn" onClick={handleNewNote} aria-label="New note">
+        <Tooltip label="Nueva nota (Ctrl N)">
+          <button className="icon-btn" onClick={handleNewNote} aria-label="Nueva nota">
             <PlusIcon />
           </button>
         </Tooltip>
-        <Tooltip label="Search (Ctrl K)">
-          <button className="icon-btn" onClick={() => setSearchOpen(true)} aria-label="Search">
+        <Tooltip label="Buscar (Ctrl K)">
+          <button className="icon-btn" onClick={() => setSearchOpen(true)} aria-label="Buscar">
             <SearchIcon />
           </button>
         </Tooltip>
@@ -163,8 +163,8 @@ export function Sidebar() {
         <span className="brand">
           notita<span className="brand-dot">.</span>
         </span>
-        <Tooltip label="Collapse sidebar">
-          <button className="icon-btn" onClick={toggleSidebar} aria-label="Collapse sidebar">
+        <Tooltip label="Contraer barra lateral">
+          <button className="icon-btn" onClick={toggleSidebar} aria-label="Contraer barra lateral">
             <ChevronIcon dir="left" />
           </button>
         </Tooltip>
@@ -172,10 +172,10 @@ export function Sidebar() {
 
       <div className="sidebar-actions">
         <button className="text-btn sidebar-action" onClick={handleNewNote}>
-          <PlusIcon /> New note
+          <PlusIcon /> Nueva nota
         </button>
         <button className="text-btn sidebar-action" onClick={() => setSearchOpen(true)}>
-          <SearchIcon /> Search
+          <SearchIcon /> Buscar
           <kbd className="sidebar-kbd">Ctrl K</kbd>
         </button>
       </div>
@@ -183,12 +183,12 @@ export function Sidebar() {
       <div className="sidebar-scroll">
         {recentNotes.length > 0 && (
           <div className="sidebar-section">
-            <div className="sidebar-section-title">Recent</div>
+            <div className="sidebar-section-title">Recientes</div>
             <button
               className={"sidebar-row" + (view.kind === "recent" ? " active" : "")}
               onClick={() => setView({ kind: "recent" })}
             >
-              All recent notes
+              Todas las notas recientes
             </button>
             {recentNotes.slice(0, 6).map((n) => (
               <NoteRow
@@ -212,9 +212,9 @@ export function Sidebar() {
 
         <div className="sidebar-section">
           <div className="sidebar-section-title">
-            Subjects
-            <Tooltip label="New subject (Ctrl Shift N)">
-              <button className="icon-btn tiny" onClick={() => setAddingSubject(true)} aria-label="New subject">
+            Materias
+            <Tooltip label="Nueva materia (Ctrl Shift N)">
+              <button className="icon-btn tiny" onClick={() => setAddingSubject(true)} aria-label="Nueva materia">
                 <PlusIcon />
               </button>
             </Tooltip>
@@ -244,10 +244,10 @@ export function Sidebar() {
                     <span className="note-row-title">{s.name}</span>
                   </button>
                 )}
-                <Tooltip label="Delete subject">
+                <Tooltip label="Eliminar materia">
                   <button
                     className="row-delete"
-                    aria-label={`Delete ${s.name}`}
+                    aria-label={`Eliminar ${s.name}`}
                     onClick={() => setConfirmTarget({ kind: "subject", id: s.id, name: s.name })}
                   >
                     <TrashIcon />
@@ -274,7 +274,7 @@ export function Sidebar() {
                       onCancelRename={() => setRenamingId(null)}
                     />
                   ))}
-                  {activeSubjectNotes.length === 0 && <div className="sidebar-empty-hint">No notes yet</div>}
+                  {activeSubjectNotes.length === 0 && <div className="sidebar-empty-hint">Todavía no hay notas</div>}
                 </div>
               )}
             </div>
@@ -293,7 +293,7 @@ export function Sidebar() {
                   setNewSubjectName("");
                 }
               }}
-              placeholder="Subject name"
+              placeholder="Nombre de la materia"
             />
           )}
         </div>
@@ -301,8 +301,8 @@ export function Sidebar() {
 
       <div className="sidebar-footer">
         <ThemeToggle />
-        <Tooltip label="Settings">
-          <button className="icon-btn" onClick={() => setSettingsOpen(true)} aria-label="Settings">
+        <Tooltip label="Configuración">
+          <button className="icon-btn" onClick={() => setSettingsOpen(true)} aria-label="Configuración">
             <GearIcon />
           </button>
         </Tooltip>
@@ -322,11 +322,11 @@ export function Sidebar() {
 
       {confirmTarget && (
         <ConfirmDialog
-          title={confirmTarget.kind === "note" ? "Delete note?" : "Delete subject?"}
+          title={confirmTarget.kind === "note" ? "¿Eliminar la nota?" : "¿Eliminar la materia?"}
           message={
             confirmTarget.kind === "note"
-              ? `"${confirmTarget.note.title || "Untitled"}" will be permanently deleted.`
-              : `"${confirmTarget.name}" and all its notes will be permanently deleted.`
+              ? `"${confirmTarget.note.title || "Sin título"}" se eliminará permanentemente.`
+              : `"${confirmTarget.name}" y todas sus notas se eliminarán permanentemente.`
           }
           onConfirm={handleConfirmDelete}
           onCancel={() => setConfirmTarget(null)}
@@ -349,6 +349,7 @@ function InlineRenameInput({
 }) {
   const [value, setValue] = useState(initialValue);
   const ref = useRef<HTMLInputElement>(null);
+  const settledRef = useRef(false);
 
   useEffect(() => {
     ref.current?.focus();
@@ -362,13 +363,22 @@ function InlineRenameInput({
       value={value}
       onChange={(e) => setValue(e.target.value)}
       onClick={(e) => e.stopPropagation()}
-      onBlur={() => onSubmit(value)}
+      onBlur={() => {
+        // Enter/Escape already resolve this input below; losing focus as a
+        // side effect of that (e.g. the input unmounting) shouldn't submit
+        // a second time with the same value.
+        if (settledRef.current) return;
+        settledRef.current = true;
+        onSubmit(value);
+      }}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
           e.preventDefault();
+          settledRef.current = true;
           onSubmit(value);
         } else if (e.key === "Escape") {
           e.preventDefault();
+          settledRef.current = true;
           onCancel();
         }
       }}
@@ -413,12 +423,12 @@ function NoteRow({
         />
       ) : (
         <button className="row-main" onClick={onSelect} onDoubleClick={onStartRename}>
-          <span className="note-row-title">{note.title || "Untitled"}</span>
+          <span className="note-row-title">{note.title || "Sin título"}</span>
           <span className="note-row-time">{timeAgo(note.updated_at)}</span>
         </button>
       )}
-      <Tooltip label="Delete note">
-        <button className="row-delete" aria-label={`Delete ${note.title || "Untitled"}`} onClick={onDeleteRequest}>
+      <Tooltip label="Eliminar nota">
+        <button className="row-delete" aria-label={`Eliminar ${note.title || "Sin título"}`} onClick={onDeleteRequest}>
           <TrashIcon />
         </button>
       </Tooltip>

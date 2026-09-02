@@ -5,12 +5,15 @@ import { applyWindowTheme, applyWindowScheme } from "./windowTheme";
 import {
   applyPresetSelection,
   applyFontSelection,
+  applySelectionColor,
   getStoredPresetId,
   setStoredPresetId,
   getStoredCustomColors,
   setStoredCustomColors,
   getStoredFontId,
   setStoredFontId,
+  getStoredSelectionColor,
+  setStoredSelectionColor,
   schemeForPresetSelection,
   type CustomColors,
 } from "./themeCustomization";
@@ -24,9 +27,11 @@ interface UiState {
   themePresetId: string;
   customColors: CustomColors | null;
   fontId: string;
+  selectionColor: string | null;
   setThemePresetId: (id: string) => void;
   setCustomColors: (colors: CustomColors) => void;
   setFontId: (id: string) => void;
+  setSelectionColor: (hex: string | null) => void;
 
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
@@ -61,8 +66,10 @@ applyTheme(initialTheme);
 const initialPresetId = getStoredPresetId();
 const initialCustomColors = getStoredCustomColors();
 const initialFontId = getStoredFontId();
+const initialSelectionColor = getStoredSelectionColor();
 applyPresetSelection(initialPresetId, initialCustomColors);
 applyFontSelection(initialFontId);
+applySelectionColor(initialSelectionColor);
 
 if (typeof window !== "undefined") {
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
@@ -82,6 +89,7 @@ export const useUiStore = create<UiState>((set, get) => ({
   themePresetId: initialPresetId,
   customColors: initialCustomColors,
   fontId: initialFontId,
+  selectionColor: initialSelectionColor,
 
   setThemePresetId: (id) => {
     setStoredPresetId(id);
@@ -106,6 +114,12 @@ export const useUiStore = create<UiState>((set, get) => ({
     setStoredFontId(id);
     applyFontSelection(id);
     set({ fontId: id });
+  },
+
+  setSelectionColor: (hex) => {
+    setStoredSelectionColor(hex);
+    applySelectionColor(hex);
+    set({ selectionColor: hex });
   },
 
   sidebarCollapsed: false,

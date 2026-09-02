@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>notita — a ridiculously simple notebook for your classes</title>
-  <meta name="description" content="A minimal, keyboard-first, local-first note-taking app for Windows 11. Pure black or pure white. Live WPM. On-device voice transcription." />
+  <title>notita — un cuaderno ridículamente simple para tus materias</title>
+  <meta name="description" content="Una app minimalista para tomar notas en Windows 11, pensada para el teclado y 100% local. Negro puro o blanco puro. PPM en vivo. Transcripción de voz en el dispositivo." />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2222%22 fill=%22%23000%22/><text x=%2230%22 y=%2272%22 font-family=%22Arial%22 font-weight=%22700%22 font-size=%2260%22 fill=%22%23fff%22>n</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,12 +17,12 @@
     <div class="wrap header-inner">
       <span class="brand">notita<span class="brand-dot">.</span></span>
       <div class="header-actions">
-        <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <button class="theme-toggle" id="themeToggle" aria-label="Cambiar tema">
           <span class="theme-thumb"></span>
           <i class="bi bi-sun-fill"></i>
           <i class="bi bi-moon-stars-fill"></i>
         </button>
-        <a class="btn btn-primary btn-sm" href="https://github.com/Gxnza48/notita/releases/latest">Download</a>
+        <a class="btn btn-primary btn-sm" href="https://github.com/Gxnza48/notita/releases/latest">Descargar</a>
       </div>
     </div>
   </header>
@@ -30,26 +30,26 @@
   <main>
     <section class="hero">
       <div class="wrap">
-        <div class="eyebrow"><span class="eyebrow-dot"></span>Windows 11 · Free · Local-first</div>
-        <h1>Open. Write.<br />Done.</h1>
-        <p class="hero-sub">A ridiculously simple notebook for your classes. Pure black, pure white, nothing fighting for your attention — just a page and your next thought.</p>
+        <div class="eyebrow"><span class="eyebrow-dot"></span>Windows 11 · Gratis · 100% local</div>
+        <h1>Abrí. Escribí.<br />Listo.</h1>
+        <p class="hero-sub">Un cuaderno ridículamente simple para tus materias. Negro puro, blanco puro, nada compitiendo por tu atención — solo una página y tu próxima idea.</p>
         <div class="hero-ctas">
           <a class="btn btn-primary" href="https://github.com/Gxnza48/notita/releases/latest">
             <i class="bi bi-download"></i>
-            Download for Windows
+            Descargar para Windows
           </a>
-          <a class="btn btn-ghost" href="https://github.com/Gxnza48/notita" target="_blank" rel="noopener">View source</a>
+          <a class="btn btn-ghost" href="https://github.com/Gxnza48/notita" target="_blank" rel="noopener">Ver código fuente</a>
         </div>
-        <p class="req">Latest release · Windows 10/11 · No account, no cloud required</p>
+        <p class="req">Última versión · Windows 10/11 · Sin cuenta, sin nube</p>
 
         <div class="demo-shell" data-reveal>
           <div class="demo-card">
             <div class="demo-bar">
-              <span>Mathematics</span>
-              <span class="demo-wpm" id="demoWpm"><i class="bi bi-lightning-charge-fill bolt-icon"></i> <b id="demoWpmValue">0</b> WPM</span>
+              <span>Matemática</span>
+              <span class="demo-wpm" id="demoWpm"><i class="bi bi-lightning-charge-fill bolt-icon"></i> <b id="demoWpmValue">0</b> PPM</span>
             </div>
             <div class="demo-body">
-              <div class="demo-title">Derivatives</div>
+              <div class="demo-title">Derivadas</div>
               <div class="demo-text" id="demoText"><span class="demo-caret"></span></div>
             </div>
           </div>
@@ -59,77 +59,77 @@
 
     <section class="markers-section">
       <div class="wrap">
-        <div class="section-kicker" data-reveal>Built for the way students actually take notes</div>
-        <h2 data-reveal>Four keystrokes turn plain text into a study system.</h2>
+        <div class="section-kicker" data-reveal>Pensada para cómo los estudiantes realmente toman apuntes</div>
+        <h2 data-reveal>Cuatro teclas convierten texto plano en un sistema de estudio.</h2>
         <div class="marker-grid" data-reveal>
           <div class="marker-cell m-important">
             <span class="marker-glyph">!</span>
-            <h3>Important</h3>
-            <p>Type <code class="mono">! </code> and flag what's going to be on the exam.</p>
+            <h3>Importante</h3>
+            <p>Escribí <code class="mono">! </code> para marcar lo que va a estar en el examen.</p>
           </div>
           <div class="marker-cell m-question">
             <span class="marker-glyph">?</span>
-            <h3>Question</h3>
-            <p>Type <code class="mono">? </code> to remember what to ask the professor.</p>
+            <h3>Pregunta</h3>
+            <p>Escribí <code class="mono">? </code> para recordar qué preguntarle al profesor.</p>
           </div>
           <div class="marker-cell m-task">
             <span class="marker-glyph">→</span>
-            <h3>Task</h3>
-            <p>Type <code class="mono">→ </code> for the thing you still need to finish.</p>
+            <h3>Tarea</h3>
+            <p>Escribí <code class="mono">→ </code> para lo que todavía te falta terminar.</p>
           </div>
           <div class="marker-cell m-voice">
             <span class="marker-glyph"><i class="bi bi-mic-fill"></i></span>
-            <h3>Voice</h3>
-            <p>Press <code class="mono">Ctrl Shift V</code> and dictate — transcribed locally, on-device.</p>
+            <h3>Voz</h3>
+            <p>Presioná <code class="mono">Ctrl Shift V</code> y dictá — se transcribe en tu dispositivo, sin internet.</p>
           </div>
         </div>
       </div>
     </section>
 
     <section class="wpm-section">
-      <div class="wrap" style="display:contents">
+      <div class="wrap wpm-grid">
         <div class="wpm-copy" data-reveal>
-          <div class="section-kicker">The signature detail</div>
-          <h2>A live WPM counter with a sense of humor.</h2>
-          <p>It stays out of the way — until you're actually flying. Then a small, playful readout appears next to your cursor and fades out the moment you stop.</p>
+          <div class="section-kicker">El detalle distintivo</div>
+          <h2>Un contador de PPM en vivo con sentido del humor.</h2>
+          <p>Se mantiene discreto — hasta que realmente estás volando. Ahí aparece un pequeño indicador junto al cursor, y se desvanece apenas parás.</p>
         </div>
         <div class="wpm-ladder" data-reveal>
-          <div class="wpm-row"><span class="wpm-label">Warming up</span><span class="n">62 WPM</span></div>
-          <div class="wpm-row tier-mid"><span class="wpm-label"><i class="bi bi-lightning-charge-fill bolt-icon"></i>Picking up</span><span class="n">108 WPM</span></div>
-          <div class="wpm-row tier-high"><span class="wpm-label"><i class="bi bi-lightning-charge-fill bolt-icon"></i>Flying</span><span class="n">134 WPM</span></div>
-          <div class="wpm-row tier-peak"><span class="wpm-label"><span class="wpm-badge-ring"><i class="bi bi-lightning-charge-fill bolt-icon"></i></span>Personal best</span><span class="n">167 WPM</span></div>
+          <div class="wpm-row"><span class="wpm-label">Entrando en calor</span><span class="n">62 PPM</span></div>
+          <div class="wpm-row tier-mid"><span class="wpm-label"><i class="bi bi-lightning-charge-fill bolt-icon"></i>Agarrando ritmo</span><span class="n">108 PPM</span></div>
+          <div class="wpm-row tier-high"><span class="wpm-label"><i class="bi bi-lightning-charge-fill bolt-icon"></i>Volando</span><span class="n">134 PPM</span></div>
+          <div class="wpm-row tier-peak"><span class="wpm-label"><span class="wpm-badge-ring"><i class="bi bi-lightning-charge-fill bolt-icon"></i></span>Récord personal</span><span class="n">167 PPM</span></div>
         </div>
       </div>
     </section>
 
     <section class="band">
       <div class="wrap">
-        <h2 data-reveal>Your notes never leave your laptop.</h2>
-        <p data-reveal>SQLite on disk, autosave on every keystroke, and speech transcription that runs entirely on-device — no server ever sees what you write or say.</p>
+        <h2 data-reveal>Tus notas nunca salen de tu compu.</h2>
+        <p data-reveal>SQLite en el disco, guardado automático en cada tecla, y transcripción de voz que corre enteramente en tu dispositivo — ningún servidor ve lo que escribís ni lo que decís.</p>
         <div class="band-tags" data-reveal>
-          <span class="band-tag">No account</span>
-          <span class="band-tag">Works offline</span>
-          <span class="band-tag">Open source</span>
-          <span class="band-tag">Auto-updates in place</span>
+          <span class="band-tag">Sin cuenta</span>
+          <span class="band-tag">Funciona sin internet</span>
+          <span class="band-tag">Código abierto</span>
+          <span class="band-tag">Se actualiza sola</span>
         </div>
       </div>
     </section>
 
     <section class="cta">
       <div class="wrap">
-        <h2 data-reveal>Your next class starts&nbsp;in two&nbsp;minutes.</h2>
+        <h2 data-reveal>Tu próxima&nbsp;clase&nbsp;empieza en&nbsp;dos&nbsp;minutos.</h2>
         <a class="btn btn-primary" href="https://github.com/Gxnza48/notita/releases/latest" data-reveal>
           <i class="bi bi-download"></i>
-          Download notita
+          Descargar notita
         </a>
-        <p class="req">Latest release · ~4 MB installer</p>
+        <p class="req">Última versión · Instalador de ~4 MB</p>
       </div>
     </section>
   </main>
 
   <footer>
     <div class="wrap footer-inner">
-      <span>notita — built for people who'd rather be writing.</span>
+      <span>notita — hecha para gente que prefiere estar escribiendo.</span>
       <div class="footer-links">
         <a href="https://github.com/Gxnza48/notita" target="_blank" rel="noopener">GitHub</a>
         <a href="https://github.com/Gxnza48/notita/releases" target="_blank" rel="noopener">Releases</a>

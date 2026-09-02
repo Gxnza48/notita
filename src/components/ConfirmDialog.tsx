@@ -4,7 +4,7 @@ import { Modal } from "./Modal";
 export function ConfirmDialog({
   title,
   message,
-  confirmLabel = "Delete",
+  confirmLabel = "Eliminar",
   onConfirm,
   onCancel,
 }: {
@@ -26,7 +26,7 @@ export function ConfirmDialog({
       <div className="confirm-panel-message">{message}</div>
       <div className="confirm-panel-actions">
         <button className="confirm-btn confirm-btn-cancel" onClick={onCancel}>
-          Cancel
+          Cancelar
         </button>
         <button ref={confirmRef} className="confirm-btn confirm-btn-danger" onClick={onConfirm}>
           {confirmLabel}

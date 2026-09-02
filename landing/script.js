@@ -52,10 +52,10 @@
   var reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   var lines = [
-    { text: "Today we learned the chain rule for composite functions.", cls: null },
-    { text: "Exam is Friday — covers chapters 4 through 6.", cls: "important" },
-    { text: "Ask about exercise 7, part b.", cls: "question" },
-    { text: "Finish problem set before Thursday.", cls: "task" },
+    { text: "Hoy vimos la regla de la cadena para funciones compuestas.", cls: null },
+    { text: "El examen es el viernes — entran los capítulos 4 al 6.", cls: "important" },
+    { text: "Preguntar sobre el ejercicio 7, inciso b.", cls: "question" },
+    { text: "Terminar la guía de ejercicios antes del jueves.", cls: "task" },
   ];
 
   if (reduceMotion) {

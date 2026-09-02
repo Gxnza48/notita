@@ -9,11 +9,11 @@ export function ThemeToggle() {
   const resolved = resolveTheme(theme);
 
   return (
-    <Tooltip label={resolved === "dark" ? "Switch to Light mode" : "Switch to Dark mode"}>
+    <Tooltip label={resolved === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}>
       <button
         className="theme-toggle"
         onClick={() => setTheme(resolved === "dark" ? "light" : "dark")}
-        aria-label="Toggle theme"
+        aria-label="Alternar tema"
       >
         <span className={"theme-toggle-thumb" + (resolved === "dark" ? " dark" : "")} />
         <SunIcon />

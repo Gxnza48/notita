@@ -1,4 +1,4 @@
-import { applyThemeTokens, clearThemeTokens, deriveTokens, schemeForBg, THEME_PRESETS, type ColorScheme } from "./themePresets";
+import { applyThemeTokens, clearThemeTokens, deriveTokens, rgba, schemeForBg, THEME_PRESETS, type ColorScheme } from "./themePresets";
 import { fontStackFor, DEFAULT_FONT_ID } from "./fontOptions";
 
 export interface CustomColors {
@@ -10,6 +10,7 @@ export interface CustomColors {
 const PRESET_KEY = "notita-theme-preset-id"; // "default" | "custom" | a THEME_PRESETS id
 const CUSTOM_KEY = "notita-theme-custom-colors";
 const FONT_KEY = "notita-font-id";
+const SELECTION_KEY = "notita-selection-color";
 
 export function getStoredPresetId(): string {
   if (typeof window === "undefined") return "default";
@@ -84,4 +85,20 @@ export function applyPresetSelection(presetId: string, customColors: CustomColor
 
 export function applyFontSelection(fontId: string) {
   document.documentElement.style.setProperty("--font-sans", fontStackFor(fontId));
+}
+
+export function getStoredSelectionColor(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(SELECTION_KEY);
+}
+
+export function setStoredSelectionColor(hex: string | null) {
+  if (hex) window.localStorage.setItem(SELECTION_KEY, hex);
+  else window.localStorage.removeItem(SELECTION_KEY);
+}
+
+/** `hex` is a plain color; the actual `::selection` background is a soft tint of it (like --accent-soft) so selected text stays readable. `null` reverts to the theme's own accent tint. */
+export function applySelectionColor(hex: string | null) {
+  if (hex) document.documentElement.style.setProperty("--selection-bg", rgba(hex, 0.32));
+  else document.documentElement.style.removeProperty("--selection-bg");
 }

@@ -21,19 +21,19 @@ export function UpdateBanner() {
     <div className="update-banner">
       {status === "available" && (
         <>
-          <span>notita {latestVersion} is available.</span>
+          <span>notita {latestVersion} está disponible.</span>
           <div className="update-banner-actions">
             <button className="text-btn" onClick={installUpdate}>
-              Install &amp; Restart
+              Instalar y reiniciar
             </button>
             <button className="text-btn update-banner-dismiss" onClick={() => setDismissed(true)}>
-              Later
+              Más tarde
             </button>
           </div>
         </>
       )}
-      {status === "downloading" && <span>Downloading update… {progress}%</span>}
-      {status === "ready" && <span>Installed. Restarting…</span>}
+      {status === "downloading" && <span>Descargando actualización… {progress}%</span>}
+      {status === "ready" && <span>Instalada. Reiniciando…</span>}
     </div>
   );
 }

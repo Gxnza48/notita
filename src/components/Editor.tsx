@@ -6,6 +6,7 @@ import Placeholder from "@tiptap/extension-placeholder";
 import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import Link from "@tiptap/extension-link";
+import Underline from "@tiptap/extension-underline";
 import { MarkerParagraph } from "../lib/markerExtension";
 import { CodeBlockWithCopy } from "../lib/codeBlockExtension";
 import { VoicePartialMark } from "../lib/voicePartialExtension";
@@ -17,8 +18,10 @@ import { engine, setWpmContext } from "../lib/wpmStore";
 import type { SaveNotePayload } from "../lib/types";
 import { WpmBadge } from "./WpmBadge";
 import { VoiceButton } from "./VoiceButton";
+import { CopyNoteButton } from "./CopyNoteButton";
 import { registerEditorFlush } from "../lib/editorBridge";
 import { registerVoiceInsertHandler, registerVoicePartialHandler } from "../lib/voiceBridge";
+import { ContextMenu, type ContextMenuItem } from "./ContextMenu";
 
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -49,11 +52,12 @@ export function Editor() {
       VoicePartialMark,
       MultiCursor,
       Placeholder.configure({
-        placeholder: ({ node }) => (node.type.name === "paragraph" ? "Start writing something worth remembering…" : ""),
+        placeholder: ({ node }) => (node.type.name === "paragraph" ? "Empezá a escribir algo que valga la pena recordar…" : ""),
       }),
       TaskList,
       TaskItem.configure({ nested: true }),
       Link.configure({ openOnClick: false, autolink: true }),
+      Underline,
     ],
     content: "",
     autofocus: "end",
@@ -122,6 +126,17 @@ export function Editor() {
     // across note switches — a "session" is this sitting, not a single note.
     setWpmContext(currentNote.id, currentNote.subject_id);
   }, [editor, currentNote]);
+
+  // The effect above only re-syncs `title` when the note ID changes —
+  // renaming the CURRENTLY open note (e.g. from the sidebar's context
+  // menu) updates currentNote.title without switching notes, and was
+  // previously left stuck showing the old title in this input.
+  useEffect(() => {
+    if (currentNote && noteIdRef.current === currentNote.id) {
+      setTitle(currentNote.title);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentNote?.title]);
 
   // flush on true unmount (app closing / editor pane closing)
   useEffect(() => {
@@ -213,6 +228,42 @@ export function Editor() {
     return () => window.clearInterval(id);
   }, []);
 
+  // Right-click a text selection for a Word/Docs-style formatting menu.
+  // With nothing selected, the native context menu still shows as before.
+  const [formatMenu, setFormatMenu] = useState<{ x: number; y: number } | null>(null);
+
+  useEffect(() => {
+    if (!editor) return;
+    const dom = editor.view.dom;
+    const handler = (e: MouseEvent) => {
+      if (editor.state.selection.empty) return;
+      e.preventDefault();
+      setFormatMenu({ x: e.clientX, y: e.clientY });
+    };
+    dom.addEventListener("contextmenu", handler);
+    return () => dom.removeEventListener("contextmenu", handler);
+  }, [editor]);
+
+  const formatMenuItems: ContextMenuItem[] = editor
+    ? [
+        { id: "bold", label: "Negrita", checked: editor.isActive("bold"), onSelect: () => editor.chain().focus().toggleBold().run() },
+        { id: "italic", label: "Cursiva", checked: editor.isActive("italic"), onSelect: () => editor.chain().focus().toggleItalic().run() },
+        {
+          id: "underline",
+          label: "Subrayado",
+          checked: editor.isActive("underline"),
+          onSelect: () => editor.chain().focus().toggleUnderline().run(),
+        },
+        {
+          id: "strike",
+          label: "Tachado",
+          checked: editor.isActive("strike"),
+          onSelect: () => editor.chain().focus().toggleStrike().run(),
+        },
+        { id: "code", label: "Código", checked: editor.isActive("code"), onSelect: () => editor.chain().focus().toggleCode().run() },
+      ]
+    : [];
+
   const handleTitleChange = (value: string) => {
     setTitle(value);
     patchCurrentNote({ title: value });
@@ -233,7 +284,10 @@ export function Editor() {
       {!focusMode && (
         <div className="editor-topbar">
           <span className="editor-subject">{subject?.name ?? ""}</span>
-          <span className="editor-clock">{clock}</span>
+          <div className="editor-topbar-right">
+            <span className="editor-clock">{clock}</span>
+            <CopyNoteButton editor={editor} />
+          </div>
         </div>
       )}
       <div className="editor-scroll">
@@ -243,14 +297,17 @@ export function Editor() {
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
             onKeyDown={handleTitleKeyDown}
-            placeholder="Untitled"
-            aria-label="Note title"
+            placeholder="Sin título"
+            aria-label="Título de la nota"
           />
           <EditorContent editor={editor} />
         </div>
       </div>
       <WpmBadge />
       <VoiceButton />
+      {formatMenu && (
+        <ContextMenu position={formatMenu} items={formatMenuItems} onClose={() => setFormatMenu(null)} />
+      )}
     </div>
   );
 }
