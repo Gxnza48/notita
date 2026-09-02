@@ -7,9 +7,11 @@ import { Onboarding } from "./components/Onboarding";
 import { CommandPalette } from "./components/CommandPalette";
 import { SearchModal } from "./components/SearchModal";
 import { SettingsPanel } from "./components/SettingsPanel";
+import { UpdateBanner } from "./components/UpdateBanner";
 import { useDataStore } from "./lib/dataStore";
 import { useUiStore } from "./lib/uiStore";
 import { useSettingsStore } from "./lib/settingsStore";
+import { useUpdaterStore } from "./lib/updaterStore";
 import { NOTE_CREATED_EVENT, type NoteCreatedPayload } from "./lib/events";
 import { COMMANDS, matchesShortcut } from "./lib/commands";
 import { applyWindowTheme } from "./lib/windowTheme";
@@ -59,6 +61,13 @@ export default function App() {
     boot();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bootAttempt]);
+
+  // Nothing else triggers an update check automatically — without this, a
+  // user can sit on an old, already-fixed-elsewhere build indefinitely
+  // unless they happen to open Settings and click "Check for updates".
+  useEffect(() => {
+    useUpdaterStore.getState().checkForUpdates();
+  }, []);
 
   useEffect(() => {
     const unlistenPromise = listen<NoteCreatedPayload>(NOTE_CREATED_EVENT, (event) => {
@@ -124,6 +133,7 @@ export default function App() {
       {commandPaletteOpen && <CommandPalette />}
       {searchOpen && <SearchModal />}
       {settingsOpen && <SettingsPanel />}
+      <UpdateBanner />
     </div>
   );
 }

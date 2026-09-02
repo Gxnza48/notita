@@ -127,6 +127,21 @@
 .notita-editor-content .voice-partial-text {
   color: var(--fg-tertiary);
 }
+.multi-cursor-caret {
+  display: inline-block;
+  width: 1px;
+  height: 1.1em;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  margin-left: -1px;
+  animation: multi-caret-blink 1s step-end infinite;
+  pointer-events: none;
+}
+@keyframes multi-caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
 .notita-editor-content code {
   font-family: var(--font-mono);
   font-size: 0.88em;

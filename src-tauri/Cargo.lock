@@ -2635,7 +2635,7 @@ dependencies = [
 
 [[package]]
 name = "notita"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "cpal",
  "r2d2",

@@ -7,6 +7,9 @@ import { useUpdaterStore } from "../lib/updaterStore";
 import { useVoiceStore, type VoiceLanguage } from "../lib/voiceStore";
 import type { ThemePreference } from "../lib/types";
 import { COMMANDS, type CommandCategory } from "../lib/commands";
+import { THEME_PRESETS } from "../lib/themePresets";
+import { FONT_OPTIONS } from "../lib/fontOptions";
+import type { CustomColors } from "../lib/themeCustomization";
 
 const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
   { value: "system", label: "System" },
@@ -26,6 +29,12 @@ export function SettingsPanel() {
   const setSettingsOpen = useUiStore((s) => s.setSettingsOpen);
   const theme = useUiStore((s) => s.theme);
   const setTheme = useUiStore((s) => s.setTheme);
+  const themePresetId = useUiStore((s) => s.themePresetId);
+  const setThemePresetId = useUiStore((s) => s.setThemePresetId);
+  const customColors = useUiStore((s) => s.customColors);
+  const setCustomColors = useUiStore((s) => s.setCustomColors);
+  const fontId = useUiStore((s) => s.fontId);
+  const setFontId = useUiStore((s) => s.setFontId);
 
   const fontSize = useSettingsStore((s) => s.fontSize);
   const lineHeight = useSettingsStore((s) => s.lineHeight);
@@ -62,7 +71,58 @@ export function SettingsPanel() {
         </div>
 
         <div className="settings-group">
+          <div className="settings-group-title">Theme</div>
+          <div className="theme-swatch-grid">
+            <button
+              type="button"
+              className={"theme-swatch theme-swatch-default" + (themePresetId === "default" ? " active" : "")}
+              onClick={() => setThemePresetId("default")}
+              title="Default (pure black / pure white)"
+              aria-label="Default theme"
+            />
+            {THEME_PRESETS.map((preset) => (
+              <button
+                type="button"
+                key={preset.id}
+                className={"theme-swatch" + (themePresetId === preset.id ? " active" : "")}
+                style={{ background: preset.bg }}
+                onClick={() => setThemePresetId(preset.id)}
+                title={preset.name}
+                aria-label={preset.name}
+              >
+                <span className="theme-swatch-accent" style={{ background: preset.accent }} />
+              </button>
+            ))}
+            <button
+              type="button"
+              className={"theme-swatch theme-swatch-custom" + (themePresetId === "custom" ? " active" : "")}
+              onClick={() => setThemePresetId("custom")}
+              title="Custom"
+              aria-label="Custom theme"
+            />
+          </div>
+          {themePresetId === "custom" && (
+            <CustomColorPicker colors={customColors} onChange={setCustomColors} />
+          )}
+        </div>
+
+        <div className="settings-group">
           <div className="settings-group-title">Editor</div>
+          <div className="settings-row">
+            <span>Font</span>
+            <div className="segmented segmented-wrap">
+              {FONT_OPTIONS.map((opt) => (
+                <button
+                  key={opt.id}
+                  className={"segmented-item" + (fontId === opt.id ? " active" : "")}
+                  style={{ fontFamily: opt.stack }}
+                  onClick={() => setFontId(opt.id)}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="settings-row">
             <span>Font size</span>
             <div className="settings-row-control">
@@ -156,6 +216,37 @@ export function SettingsPanel() {
         <UpdatesSection />
       </div>
     </Modal>
+  );
+}
+
+const DEFAULT_CUSTOM_COLORS: CustomColors = { bg: "#0d1117", fg: "#e6edf3", accent: "#58a6ff" };
+
+function CustomColorPicker({
+  colors,
+  onChange,
+}: {
+  colors: CustomColors | null;
+  onChange: (colors: CustomColors) => void;
+}) {
+  const value = colors ?? DEFAULT_CUSTOM_COLORS;
+
+  const set = (patch: Partial<CustomColors>) => onChange({ ...value, ...patch });
+
+  return (
+    <div className="theme-custom-colors">
+      <label className="theme-color-field">
+        <input type="color" value={value.bg} onChange={(e) => set({ bg: e.target.value })} />
+        <span>Background</span>
+      </label>
+      <label className="theme-color-field">
+        <input type="color" value={value.fg} onChange={(e) => set({ fg: e.target.value })} />
+        <span>Text</span>
+      </label>
+      <label className="theme-color-field">
+        <input type="color" value={value.accent} onChange={(e) => set({ accent: e.target.value })} />
+        <span>Accent</span>
+      </label>
+    </div>
   );
 }
 

@@ -482,6 +482,108 @@ mark {
   color: var(--fg);
   box-shadow: 0 1px 3px var(--shadow-color);
 }
+.segmented-wrap {
+  flex-wrap: wrap;
+  max-width: 320px;
+}
+
+.theme-swatch-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+  gap: 8px;
+  padding-top: 2px;
+}
+.theme-swatch {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 1px 2px var(--shadow-color);
+  transition: transform var(--dur-fast) var(--ease), box-shadow var(--dur-fast) var(--ease);
+}
+.theme-swatch:hover {
+  transform: scale(1.08);
+}
+.theme-swatch.active {
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
+}
+.theme-swatch-accent {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--bg);
+}
+.theme-swatch-default {
+  background: linear-gradient(135deg, #000000 50%, #ffffff 50%);
+}
+.theme-swatch-custom {
+  background: conic-gradient(from 180deg, #f87171, #fbbf24, #4ade80, #38bdf8, #a78bfa, #f87171);
+}
+
+.theme-custom-colors {
+  display: flex;
+  gap: 18px;
+  padding-top: 10px;
+}
+.theme-color-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+  color: var(--fg-tertiary);
+}
+.theme-color-field input[type="color"] {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--border-strong);
+  border-radius: 50%;
+  background: none;
+  cursor: pointer;
+}
+.theme-color-field input[type="color"]::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 50%;
+}
+.theme-color-field input[type="color"]::-webkit-color-swatch {
+  border: none;
+  border-radius: 50%;
+}
+
+.update-banner {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  border: 1px solid var(--border-strong);
+  box-shadow: 0 12px 30px var(--shadow-color);
+  font-size: 13px;
+  color: var(--fg-secondary);
+  animation: rise-in var(--dur-slow) var(--ease);
+}
+.update-banner-actions {
+  display: flex;
+  gap: 10px;
+}
+.update-banner .text-btn {
+  color: var(--accent);
+  font-size: 12.5px;
+}
+.update-banner-dismiss {
+  color: var(--fg-tertiary) !important;
+}
 
 /* ---------- Onboarding ---------- */
 .onboarding {

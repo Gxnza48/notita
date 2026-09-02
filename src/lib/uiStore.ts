@@ -1,12 +1,32 @@
 import { create } from "zustand";
 import type { ThemePreference } from "./types";
 import { applyTheme, getStoredThemePreference, setStoredThemePreference } from "./theme";
+import { applyWindowTheme, applyWindowScheme } from "./windowTheme";
+import {
+  applyPresetSelection,
+  applyFontSelection,
+  getStoredPresetId,
+  setStoredPresetId,
+  getStoredCustomColors,
+  setStoredCustomColors,
+  getStoredFontId,
+  setStoredFontId,
+  schemeForPresetSelection,
+  type CustomColors,
+} from "./themeCustomization";
 
 export type ViewMode = { kind: "recent" } | { kind: "subject"; subjectId: string };
 
 interface UiState {
   theme: ThemePreference;
   setTheme: (pref: ThemePreference) => void;
+
+  themePresetId: string;
+  customColors: CustomColors | null;
+  fontId: string;
+  setThemePresetId: (id: string) => void;
+  setCustomColors: (colors: CustomColors) => void;
+  setFontId: (id: string) => void;
 
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
@@ -38,6 +58,12 @@ interface UiState {
 const initialTheme = getStoredThemePreference();
 applyTheme(initialTheme);
 
+const initialPresetId = getStoredPresetId();
+const initialCustomColors = getStoredCustomColors();
+const initialFontId = getStoredFontId();
+applyPresetSelection(initialPresetId, initialCustomColors);
+applyFontSelection(initialFontId);
+
 if (typeof window !== "undefined") {
   window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
     const current = getStoredThemePreference();
@@ -51,6 +77,35 @@ export const useUiStore = create<UiState>((set, get) => ({
     setStoredThemePreference(pref);
     applyTheme(pref);
     set({ theme: pref });
+  },
+
+  themePresetId: initialPresetId,
+  customColors: initialCustomColors,
+  fontId: initialFontId,
+
+  setThemePresetId: (id) => {
+    setStoredPresetId(id);
+    applyPresetSelection(id, get().customColors);
+    const scheme = id === "default" ? null : schemeForPresetSelection(id, get().customColors);
+    if (scheme) applyWindowScheme(scheme);
+    else applyWindowTheme(get().theme);
+    set({ themePresetId: id });
+  },
+
+  setCustomColors: (colors) => {
+    setStoredCustomColors(colors);
+    set({ customColors: colors });
+    if (get().themePresetId === "custom") {
+      applyPresetSelection("custom", colors);
+      const scheme = schemeForPresetSelection("custom", colors);
+      if (scheme) applyWindowScheme(scheme);
+    }
+  },
+
+  setFontId: (id) => {
+    setStoredFontId(id);
+    applyFontSelection(id);
+    set({ fontId: id });
   },
 
   sidebarCollapsed: false,

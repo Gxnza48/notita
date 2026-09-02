@@ -9,6 +9,7 @@ import Link from "@tiptap/extension-link";
 import { MarkerParagraph } from "../lib/markerExtension";
 import { CodeBlockWithCopy } from "../lib/codeBlockExtension";
 import { VoicePartialMark } from "../lib/voicePartialExtension";
+import { MultiCursor } from "../lib/multiCursorExtension";
 import { analyzeDoc } from "../lib/markers";
 import { useDataStore } from "../lib/dataStore";
 import { useUiStore } from "../lib/uiStore";
@@ -46,6 +47,7 @@ export function Editor() {
       MarkerParagraph,
       CodeBlockWithCopy,
       VoicePartialMark,
+      MultiCursor,
       Placeholder.configure({
         placeholder: ({ node }) => (node.type.name === "paragraph" ? "Start writing something worth remembering…" : ""),
       }),
