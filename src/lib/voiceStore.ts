@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { listen } from "@tauri-apps/api/event";
 import { api } from "./tauri";
-import { insertVoiceSegment } from "./voiceBridge";
+import { insertVoiceSegment, setVoicePartial } from "./voiceBridge";
 
 export type VoiceLanguage = "es" | "en" | "auto";
 
@@ -33,11 +33,16 @@ function armListenersOnce() {
     });
   });
 
-  listen<{ text: string }>("voice-segment", (event) => {
+  listen<{ text: string }>("voice-final", (event) => {
     insertVoiceSegment(event.payload.text);
   });
 
+  listen<{ text: string }>("voice-partial", (event) => {
+    setVoicePartial(event.payload.text);
+  });
+
   listen<string>("voice-error", (event) => {
+    setVoicePartial("");
     useVoiceStore.setState({ error: event.payload, recording: false });
   });
 

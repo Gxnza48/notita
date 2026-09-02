@@ -1,3 +1,4 @@
+use std::collections::VecDeque;
 use std::io::Write;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -5,7 +6,7 @@ use std::sync::{Arc, Mutex};
 
 use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
 use tauri::{AppHandle, Emitter, Manager};
-use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
+use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters, WhisperState};
 
 const MODEL_URL: &str = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin";
 const MODEL_FILE_NAME: &str = "ggml-base.bin";
@@ -198,8 +199,7 @@ fn rms_of(samples: &[f32]) -> f32 {
     (sum_sq / samples.len() as f32).sqrt()
 }
 
-fn transcribe(ctx: &WhisperContext, samples: &[f32], language: &str) -> Result<String, String> {
-    let mut state = ctx.create_state().map_err(|e| e.to_string())?;
+fn transcribe_with_state(state: &mut WhisperState, samples: &[f32], language: &str) -> Result<String, String> {
     let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 1 });
     if language != "auto" {
         params.set_language(Some(language));
@@ -238,52 +238,123 @@ struct VoiceSegment {
     text: String,
 }
 
-fn flush_segment(segment: &mut Vec<f32>, ctx: &WhisperContext, app: &AppHandle, input_rate: u32, language: &str) {
-    if segment.is_empty() {
-        return;
+/// Runs one Whisper inference over `window_raw` (native-rate mono audio,
+/// resampled to 16kHz here) on the shared, reused `WhisperState`, and logs
+/// audio duration / wall time / RTF (real-time factor: >1 means Whisper is
+/// slower than real time on this machine) plus how many extra mpsc chunks
+/// were drained alongside it, so a persistently slow model is diagnosable
+/// from voice-debug.log instead of guessed at.
+fn infer_window(
+    state: &mut WhisperState,
+    window_raw: &[f32],
+    input_rate: u32,
+    language: &str,
+    app: &AppHandle,
+    kind: &str,
+    backlog_chunks: usize,
+) -> String {
+    if window_raw.is_empty() {
+        return String::new();
     }
-    let sample_count = segment.len();
-    let audio_ms = (sample_count as u128 * 1000) / input_rate as u128;
-    let resampled = resample_to_16k(segment, input_rate);
-    segment.clear();
+    let audio_ms = (window_raw.len() as u128 * 1000) / input_rate as u128;
+    let resampled = resample_to_16k(window_raw, input_rate);
     let started = std::time::Instant::now();
-    let result = transcribe(ctx, &resampled, language);
+    let result = transcribe_with_state(state, &resampled, language);
     let elapsed_ms = started.elapsed().as_millis();
     let rtf = if audio_ms > 0 { elapsed_ms as f32 / audio_ms as f32 } else { 0.0 };
     match result {
-        Ok(text) if !text.is_empty() => {
+        Ok(text) => {
             log_voice(
                 app,
-                &format!("segment: {audio_ms}ms audio, transcribed in {elapsed_ms}ms (rtf={rtf:.2}) -> \"{text}\""),
+                &format!(
+                    "{kind}: window={audio_ms}ms infer={elapsed_ms}ms rtf={rtf:.2} backlog_chunks={backlog_chunks} -> \"{text}\""
+                ),
             );
-            let _ = app.emit("voice-segment", VoiceSegment { text });
-        }
-        Ok(_) => {
-            log_voice(
-                app,
-                &format!("segment: {audio_ms}ms audio, transcribed in {elapsed_ms}ms (rtf={rtf:.2}) -> empty transcription"),
-            );
+            text
         }
         Err(e) => {
-            log_voice(app, &format!("transcription error after {elapsed_ms}ms: {e}"));
+            log_voice(app, &format!("{kind}: transcription error after {elapsed_ms}ms: {e}"));
+            String::new()
         }
     }
 }
 
-/// Buffers incoming audio, treats a pause after speech as a sentence
-/// boundary, and transcribes each completed segment — this reads as
-/// "real-time" for dictation without needing true streaming inference,
-/// which whisper.cpp isn't built for.
+/// Composes the display text for a still-open utterance: everything already
+/// rolled into `confirmed`, followed by the latest (not-yet-rolled) window
+/// transcript. This is what gets sent as `voice-partial` — the frontend
+/// replaces its previous partial with this string wholesale, it never
+/// concatenates partials itself.
+fn compose(confirmed: &str, window_text: &str) -> String {
+    let confirmed = confirmed.trim();
+    let window_text = window_text.trim();
+    if confirmed.is_empty() {
+        window_text.to_string()
+    } else if window_text.is_empty() {
+        confirmed.to_string()
+    } else {
+        format!("{confirmed} {window_text}")
+    }
+}
+
+fn push_confirmed(confirmed: &mut String, new_text: &str) {
+    let new_text = new_text.trim();
+    if new_text.is_empty() {
+        return;
+    }
+    if !confirmed.is_empty() {
+        confirmed.push(' ');
+    }
+    confirmed.push_str(new_text);
+}
+
+/// Runs the last inference for the current utterance (whatever's left in
+/// `window`, on top of anything already rolled into `soft_confirmed`),
+/// emits it as `voice-final`, and resets both — ready for the next
+/// utterance with no leftover state.
+fn finalize_utterance(
+    window: &mut VecDeque<f32>,
+    soft_confirmed: &mut String,
+    state: &mut WhisperState,
+    app: &AppHandle,
+    input_rate: u32,
+    language: &str,
+    backlog_chunks: usize,
+) {
+    let audio_slice = window.make_contiguous();
+    let text = infer_window(state, audio_slice, input_rate, language, app, "final", backlog_chunks);
+    let final_text = compose(soft_confirmed, &text);
+    window.clear();
+    soft_confirmed.clear();
+    if !final_text.is_empty() {
+        let _ = app.emit("voice-final", VoiceSegment { text: final_text });
+    }
+    let _ = app.emit("voice-partial", VoiceSegment { text: String::new() });
+}
+
+/// Live-dictation pipeline: instead of waiting for a pause to transcribe a
+/// whole utterance, Whisper runs periodically (every STEP_MS) over a
+/// bounded rolling window of recent audio, so a `voice-partial` preview
+/// updates while the user is still talking. When the rolling window fills
+/// up (WINDOW_MS), its transcript is folded into `soft_confirmed` and the
+/// window resets to a small overlap tail (KEEP_MS) — this keeps every
+/// individual Whisper call bounded to a couple of seconds of audio no
+/// matter how long the user keeps talking, while `soft_confirmed + latest
+/// window` still reads as the full utterance so far. A real pause
+/// (SILENCE_HOLD_MS) or a stop request finalizes the utterance as
+/// `voice-final` and resets everything for the next one.
 ///
-/// Segment/silence duration are tracked by SAMPLE COUNT, not wall-clock
-/// `Instant`s. If transcription ever falls behind real time, the mpsc
-/// channel queues up a backlog that then drains in a near-instant burst
-/// once `flush_segment` returns — wall-clock timers barely move during
-/// that burst, so a wall-clock-based flush condition would never fire
-/// and segments would grow without bound (compounding the very lag
-/// they're supposed to prevent). Audio-sample-based timing stays
-/// correct regardless of how far behind the processing loop gets: each
-/// segment is still capped at MAX_SEGMENT_MS of actual audio.
+/// Window/silence/step duration are tracked by SAMPLE COUNT, not
+/// wall-clock `Instant`s (see the death-spiral bug fixed in v0.1.6): if
+/// transcription ever falls behind real time, sample-based bounds keep
+/// every window capped regardless of how large the mpsc backlog gets. The
+/// channel itself is drained opportunistically each iteration (see
+/// `backlog_chunks`) so processing always works on the freshest audio
+/// instead of a queue of stale chunks.
+///
+/// A single `WhisperState` is created once per recording session here and
+/// reused for every inference — `ctx.create_state()` is NOT called per
+/// window, matching whisper.cpp's own streaming example. It's dropped when
+/// this function returns, so a new recording session always starts clean.
 fn run_processing_loop(
     rx: std::sync::mpsc::Receiver<Vec<f32>>,
     stop_flag: Arc<AtomicBool>,
@@ -293,17 +364,38 @@ fn run_processing_loop(
     language: String,
 ) {
     const SILENCE_RMS: f32 = 0.012;
-    const SILENCE_HOLD_MS: u128 = 450;
-    const MIN_SEGMENT_MS: u128 = 400;
-    const MAX_SEGMENT_MS: u128 = 4000;
+    const SILENCE_HOLD_MS: u128 = 600;
+    const WINDOW_MS: u128 = 2200;
+    const STEP_MS: u128 = 600;
+    const KEEP_MS: u128 = 300;
+    const PREROLL_MS: u128 = 250;
     const NO_AUDIO_HINT_MS: u128 = 6000;
 
-    let samples_to_ms = |samples: usize| -> u128 { (samples as u128 * 1000) / input_rate as u128 };
+    let mut state = match ctx.create_state() {
+        Ok(s) => s,
+        Err(e) => {
+            log_voice(&app, &format!("failed to create whisper state: {e}"));
+            let _ = app.emit("voice-error", e.to_string());
+            return;
+        }
+    };
 
-    let mut segment: Vec<f32> = Vec::new();
+    let ms_to_samples = |ms: u128| -> usize { ((ms * input_rate as u128) / 1000) as usize };
+
+    let window_cap = ms_to_samples(WINDOW_MS).max(1);
+    let keep_samples = ms_to_samples(KEEP_MS);
+    let preroll_cap = ms_to_samples(PREROLL_MS).max(1);
+    let step_samples = ms_to_samples(STEP_MS).max(1);
+    let silence_hold_samples = ms_to_samples(SILENCE_HOLD_MS);
+
+    let mut preroll: VecDeque<f32> = VecDeque::with_capacity(preroll_cap);
+    let mut window: VecDeque<f32> = VecDeque::new();
+    let mut soft_confirmed = String::new();
     let mut speaking = false;
-    let mut silence_samples: usize = 0;
-    let mut segment_samples: usize = 0;
+    let mut silence_samples_run: usize = 0;
+    let mut since_last_infer: usize = 0;
+    let mut last_partial_sent = String::new();
+
     let recording_started = std::time::Instant::now();
     let mut ever_spoke = false;
     let mut hinted_no_audio = false;
@@ -313,39 +405,86 @@ fn run_processing_loop(
         if stop_flag.load(Ordering::Relaxed) {
             break;
         }
-        match rx.recv_timeout(std::time::Duration::from_millis(200)) {
-            Ok(chunk) => {
-                let rms = rms_of(&chunk);
-                if rms > peak_rms_seen {
-                    peak_rms_seen = rms;
-                }
-                segment_samples += chunk.len();
-                segment.extend_from_slice(&chunk);
 
-                if rms > SILENCE_RMS {
+        let mut batch = match rx.recv_timeout(std::time::Duration::from_millis(200)) {
+            Ok(chunk) => chunk,
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => Vec::new(),
+            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
+        };
+
+        if !batch.is_empty() {
+            // Drain whatever else is already queued so we always act on the
+            // freshest audio instead of processing one small chunk at a time
+            // while a backlog piles up behind it.
+            let mut backlog_chunks = 0usize;
+            while let Ok(more) = rx.try_recv() {
+                batch.extend(more);
+                backlog_chunks += 1;
+            }
+
+            let rms = rms_of(&batch);
+            if rms > peak_rms_seen {
+                peak_rms_seen = rms;
+            }
+
+            if rms > SILENCE_RMS {
+                if !speaking {
                     speaking = true;
                     ever_spoke = true;
-                    silence_samples = 0;
-                } else if speaking {
-                    silence_samples += chunk.len();
+                    window.clear();
+                    window.extend(preroll.iter().copied());
+                    soft_confirmed.clear();
+                    since_last_infer = 0;
+                    last_partial_sent.clear();
+                }
+                silence_samples_run = 0;
+            } else if speaking {
+                silence_samples_run += batch.len();
+            }
+
+            // Update the preroll ring AFTER using it above, so it never
+            // double-counts the very batch that just triggered speech onset.
+            for &s in &batch {
+                if preroll.len() >= preroll_cap {
+                    preroll.pop_front();
+                }
+                preroll.push_back(s);
+            }
+
+            if speaking {
+                window.extend(batch.iter().copied());
+                since_last_infer += batch.len();
+
+                if window.len() > window_cap {
+                    let audio_slice = window.make_contiguous();
+                    let text = infer_window(&mut state, audio_slice, input_rate, &language, &app, "roll", backlog_chunks);
+                    push_confirmed(&mut soft_confirmed, &text);
+                    let tail_start = window.len().saturating_sub(keep_samples);
+                    window.drain(..tail_start);
+                    since_last_infer = 0;
+                    if soft_confirmed != last_partial_sent {
+                        let _ = app.emit("voice-partial", VoiceSegment { text: soft_confirmed.clone() });
+                        last_partial_sent = soft_confirmed.clone();
+                    }
+                } else if since_last_infer >= step_samples {
+                    let audio_slice = window.make_contiguous();
+                    let text = infer_window(&mut state, audio_slice, input_rate, &language, &app, "partial", backlog_chunks);
+                    since_last_infer = 0;
+                    let partial_display = compose(&soft_confirmed, &text);
+                    if partial_display != last_partial_sent {
+                        let _ = app.emit("voice-partial", VoiceSegment { text: partial_display.clone() });
+                        last_partial_sent = partial_display;
+                    }
                 }
 
-                let segment_ms = samples_to_ms(segment_samples);
-                let silence_ms = samples_to_ms(silence_samples);
-
-                let should_flush = speaking
-                    && segment_ms > MIN_SEGMENT_MS
-                    && (silence_ms > SILENCE_HOLD_MS || segment_ms > MAX_SEGMENT_MS);
-
-                if should_flush {
-                    flush_segment(&mut segment, &ctx, &app, input_rate, &language);
+                if silence_samples_run >= silence_hold_samples {
+                    finalize_utterance(&mut window, &mut soft_confirmed, &mut state, &app, input_rate, &language, backlog_chunks);
                     speaking = false;
-                    silence_samples = 0;
-                    segment_samples = 0;
+                    silence_samples_run = 0;
+                    since_last_infer = 0;
+                    last_partial_sent.clear();
                 }
             }
-            Err(std::sync::mpsc::RecvTimeoutError::Timeout) => {}
-            Err(std::sync::mpsc::RecvTimeoutError::Disconnected) => break,
         }
 
         if !hinted_no_audio && !ever_spoke && recording_started.elapsed().as_millis() > NO_AUDIO_HINT_MS {
@@ -361,8 +500,8 @@ fn run_processing_loop(
         }
     }
 
-    if speaking {
-        flush_segment(&mut segment, &ctx, &app, input_rate, &language);
+    if speaking && (!window.is_empty() || !soft_confirmed.is_empty()) {
+        finalize_utterance(&mut window, &mut soft_confirmed, &mut state, &app, input_rate, &language, 0);
     }
     log_voice(
         &app,

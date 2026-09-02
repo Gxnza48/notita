@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
+import { TextSelection } from "@tiptap/pm/state";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import TaskList from "@tiptap/extension-task-list";
@@ -7,6 +8,7 @@ import TaskItem from "@tiptap/extension-task-item";
 import Link from "@tiptap/extension-link";
 import { MarkerParagraph } from "../lib/markerExtension";
 import { CodeBlockWithCopy } from "../lib/codeBlockExtension";
+import { VoicePartialMark } from "../lib/voicePartialExtension";
 import { analyzeDoc } from "../lib/markers";
 import { useDataStore } from "../lib/dataStore";
 import { useUiStore } from "../lib/uiStore";
@@ -15,7 +17,7 @@ import type { SaveNotePayload } from "../lib/types";
 import { WpmBadge } from "./WpmBadge";
 import { VoiceButton } from "./VoiceButton";
 import { registerEditorFlush } from "../lib/editorBridge";
-import { registerVoiceInsertHandler } from "../lib/voiceBridge";
+import { registerVoiceInsertHandler, registerVoicePartialHandler } from "../lib/voiceBridge";
 
 const SAVE_DEBOUNCE_MS = 500;
 
@@ -43,6 +45,7 @@ export function Editor() {
       StarterKit.configure({ paragraph: false, codeBlock: false }),
       MarkerParagraph,
       CodeBlockWithCopy,
+      VoicePartialMark,
       Placeholder.configure({
         placeholder: ({ node }) => (node.type.name === "paragraph" ? "Start writing something worth remembering…" : ""),
       }),
@@ -134,13 +137,73 @@ export function Editor() {
     return () => registerEditorFlush(null);
   }, []);
 
-  // insert transcribed voice segments at the cursor of whichever note is open
+  // Live voice dictation: `voice-partial` repeatedly replaces a single
+  // tracked range of visually-muted (VoicePartialMark) text at the cursor —
+  // never appended, always replaced in place — so the sentence-so-far
+  // appears to grow while the user is still talking. `voice-final` swaps
+  // that range for plain confirmed text. Transactions are dispatched
+  // directly (not through the Tiptap chain API) so they can be marked
+  // `addToHistory: false` — a partial update firing every ~600ms shouldn't
+  // spam undo history.
+  const partialRangeRef = useRef<{ from: number; to: number } | null>(null);
+
   useEffect(() => {
     if (!editor) return;
-    registerVoiceInsertHandler((text) => {
-      editor.chain().focus().insertContent(`${text} `).run();
-    });
-    return () => registerVoiceInsertHandler(null);
+
+    const applyPartial = (text: string) => {
+      const { state, view } = editor;
+      const range = partialRangeRef.current;
+      try {
+        if (!text) {
+          if (range) {
+            const tr = state.tr.delete(range.from, range.to);
+            tr.setMeta("addToHistory", false);
+            view.dispatch(tr);
+          }
+          partialRangeRef.current = null;
+          return;
+        }
+        const tr = state.tr;
+        const from = range ? range.from : state.selection.to;
+        tr.insertText(text, from, range ? range.to : from);
+        const to = from + text.length;
+        tr.addMark(from, to, state.schema.marks.voicePartial.create());
+        tr.setMeta("addToHistory", false);
+        view.dispatch(tr);
+        partialRangeRef.current = { from, to };
+      } catch {
+        // Stale range (e.g. the user edited elsewhere mid-dictation) —
+        // drop this update rather than throw; the next one recovers.
+        partialRangeRef.current = null;
+      }
+    };
+
+    const applyFinal = (text: string) => {
+      const { state, view } = editor;
+      const range = partialRangeRef.current;
+      partialRangeRef.current = null;
+      const content = `${text} `;
+      try {
+        const tr = state.tr;
+        const from = range ? range.from : state.selection.to;
+        tr.insertText(content, from, range ? range.to : from);
+        const to = from + content.length;
+        tr.removeMark(from, to, state.schema.marks.voicePartial);
+        tr.setSelection(TextSelection.create(tr.doc, to));
+        view.dispatch(tr);
+        view.focus();
+      } catch {
+        editor.chain().focus().insertContent(content).run();
+      }
+    };
+
+    registerVoicePartialHandler(applyPartial);
+    registerVoiceInsertHandler(applyFinal);
+    return () => {
+      registerVoicePartialHandler(null);
+      registerVoiceInsertHandler(null);
+      partialRangeRef.current = null;
+    };
   }, [editor]);
 
   useEffect(() => {

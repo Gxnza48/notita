@@ -124,6 +124,9 @@
 .notita-editor-content strong {
   font-weight: 600;
 }
+.notita-editor-content .voice-partial-text {
+  color: var(--fg-tertiary);
+}
 .notita-editor-content code {
   font-family: var(--font-mono);
   font-size: 0.88em;
