@@ -88,7 +88,10 @@ export function ContextMenu({
             tabIndex={i === activeIndex ? 0 : -1}
             className={"context-menu-item" + (item.destructive ? " destructive" : "") + (i === activeIndex ? " active" : "")}
             onMouseEnter={() => setActiveIndex(i)}
-            onClick={() => {
+            onPointerDown={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
               item.onSelect();
               onClose();
             }}

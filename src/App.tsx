@@ -40,23 +40,30 @@ export default function App() {
 
   useEffect(() => {
     async function boot() {
-      try {
-        setBootError(null);
-        await useDataStore.getState().loadAll();
-        await useSettingsStore.getState().load();
-        const { recentNotes } = useDataStore.getState();
-        const { openLastNote } = useSettingsStore.getState();
-        if (openLastNote && recentNotes.length > 0) {
-          const latest = recentNotes[0];
-          setView({ kind: "subject", subjectId: latest.subject_id });
-          setActiveNoteId(latest.id);
-          await useDataStore.getState().openNote(latest.id);
+      const maxRetries = 6;
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          setBootError(null);
+          await useDataStore.getState().loadAll();
+          await useSettingsStore.getState().load();
+          const { recentNotes } = useDataStore.getState();
+          const { openLastNote } = useSettingsStore.getState();
+          if (openLastNote && recentNotes.length > 0) {
+            const latest = recentNotes[0];
+            setView({ kind: "subject", subjectId: latest.subject_id });
+            setActiveNoteId(latest.id);
+            await useDataStore.getState().openNote(latest.id);
+          }
+          return;
+        } catch (e) {
+          const msg = e instanceof Error ? e.message : String(e);
+          if (attempt < maxRetries) {
+            // Tauri setup() in Rust may still be running .manage(AppState) or SQLite init
+            await new Promise((r) => setTimeout(r, attempt * 120));
+          } else {
+            setBootError(msg);
+          }
         }
-      } catch (e) {
-        // Without this, a failed initial load (e.g. a transient SQLite lock)
-        // left the app stuck forever on an empty div — indistinguishable
-        // from a frozen black screen.
-        setBootError(e instanceof Error ? e.message : String(e));
       }
     }
     boot();

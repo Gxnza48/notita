@@ -114,7 +114,14 @@ export function Sidebar() {
 
   const noteMenuItems = (note: NoteSummary): ContextMenuItem[] => [
     { id: "open", label: "Abrir", onSelect: () => handleSelectNote(note.id) },
-    { id: "rename", label: "Renombrar", onSelect: () => setRenamingId(note.id) },
+    {
+      id: "rename",
+      label: "Renombrar",
+      onSelect: () => {
+        handleSelectNote(note.id);
+        setRenamingId(note.id);
+      },
+    },
     { id: "duplicate", label: "Duplicar", onSelect: () => handleDuplicateNote(note) },
     {
       id: "delete",
@@ -354,13 +361,16 @@ function InlineRenameInput({
   const [value, setValue] = useState(initialValue);
   const ref = useRef<HTMLInputElement>(null);
   const settledRef = useRef(false);
+  const mountedAtRef = useRef(Date.now());
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => {
+    ref.current?.focus();
+    ref.current?.select();
+    const id = setTimeout(() => {
       ref.current?.focus();
       ref.current?.select();
-    });
-    return () => cancelAnimationFrame(id);
+    }, 50);
+    return () => clearTimeout(id);
   }, []);
 
   return (
@@ -372,9 +382,11 @@ function InlineRenameInput({
       onClick={(e) => e.stopPropagation()}
       onDoubleClick={(e) => e.stopPropagation()}
       onBlur={() => {
-        // Enter/Escape already resolve this input below; losing focus as a
-        // side effect of that (e.g. the input unmounting) shouldn't submit
-        // a second time with the same value.
+        // Ignore spurious blur events during the initial mounting / context menu dismissal
+        if (Date.now() - mountedAtRef.current < 250) {
+          ref.current?.focus();
+          return;
+        }
         if (settledRef.current) return;
         settledRef.current = true;
         onSubmit(value);
