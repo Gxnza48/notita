@@ -81,9 +81,26 @@ export const useDataStore = create<DataState>((set, get) => ({
   },
 
   renameNote: async (id, title, subjectId) => {
-    await api.renameNote(id, title);
+    const patchSummary = (n: NoteSummary): NoteSummary =>
+      n.id === id ? { ...n, title, updated_at: Date.now() } : n;
     const current = get().currentNote;
-    if (current?.id === id) set({ currentNote: { ...current, title, updated_at: Date.now() } });
+    if (current?.id === id) {
+      set({
+        currentNote: { ...current, title, updated_at: Date.now() },
+        recentNotes: get().recentNotes.map(patchSummary),
+        notesBySubject: Object.fromEntries(
+          Object.entries(get().notesBySubject).map(([k, v]) => [k, v.map(patchSummary)]),
+        ),
+      });
+    } else {
+      set({
+        recentNotes: get().recentNotes.map(patchSummary),
+        notesBySubject: Object.fromEntries(
+          Object.entries(get().notesBySubject).map(([k, v]) => [k, v.map(patchSummary)]),
+        ),
+      });
+    }
+    await api.renameNote(id, title);
     await Promise.all([get().loadRecentNotes(), get().loadNotesForSubject(subjectId)]);
   },
 
@@ -109,23 +126,56 @@ export const useDataStore = create<DataState>((set, get) => ({
   patchCurrentNote: (patch) => {
     const current = get().currentNote;
     if (!current) return;
-    set({ currentNote: { ...current, ...patch } });
+    const updated = { ...current, ...patch };
+    const patchSummary = (n: NoteSummary): NoteSummary =>
+      n.id === current.id
+        ? {
+            ...n,
+            title: patch.title !== undefined ? patch.title : n.title,
+            updated_at: patch.updated_at !== undefined ? patch.updated_at : n.updated_at,
+          }
+        : n;
+    set({
+      currentNote: updated,
+      recentNotes: get().recentNotes.map(patchSummary),
+      notesBySubject: Object.fromEntries(
+        Object.entries(get().notesBySubject).map(([k, v]) => [k, v.map(patchSummary)]),
+      ),
+    });
   },
 
   persistCurrentNote: async (payload) => {
     await api.saveNote(payload);
     const current = get().currentNote;
-    if (!current || current.id !== payload.id) return;
-    const updated: Note = {
-      ...current,
-      title: payload.title,
-      content: payload.content,
-      content_text: payload.content_text,
-      concept_count: payload.concept_count,
-      updated_at: Date.now(),
-    };
-    set({ currentNote: updated });
-    await Promise.all([get().loadRecentNotes(), get().loadNotesForSubject(updated.subject_id)]);
+    const patchSummary = (n: NoteSummary): NoteSummary =>
+      n.id === payload.id ? { ...n, title: payload.title, updated_at: Date.now() } : n;
+
+    if (current && current.id === payload.id) {
+      const updated: Note = {
+        ...current,
+        title: payload.title,
+        content: payload.content,
+        content_text: payload.content_text,
+        concept_count: payload.concept_count,
+        updated_at: Date.now(),
+      };
+      set({
+        currentNote: updated,
+        recentNotes: get().recentNotes.map(patchSummary),
+        notesBySubject: Object.fromEntries(
+          Object.entries(get().notesBySubject).map(([k, v]) => [k, v.map(patchSummary)]),
+        ),
+      });
+      await Promise.all([get().loadRecentNotes(), get().loadNotesForSubject(updated.subject_id)]);
+    } else {
+      set({
+        recentNotes: get().recentNotes.map(patchSummary),
+        notesBySubject: Object.fromEntries(
+          Object.entries(get().notesBySubject).map(([k, v]) => [k, v.map(patchSummary)]),
+        ),
+      });
+      await get().loadRecentNotes();
+    }
   },
 
   deleteNote: async (id) => {

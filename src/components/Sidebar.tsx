@@ -37,6 +37,7 @@ export function Sidebar() {
   const subjects = useDataStore((s) => s.subjects);
   const recentNotes = useDataStore((s) => s.recentNotes);
   const notesBySubject = useDataStore((s) => s.notesBySubject);
+  const currentNote = useDataStore((s) => s.currentNote);
   const createNote = useDataStore((s) => s.createNote);
   const createSubject = useDataStore((s) => s.createSubject);
   const renameSubject = useDataStore((s) => s.renameSubject);
@@ -58,6 +59,7 @@ export function Sidebar() {
   }, [view]);
 
   const handleSelectNote = async (id: string) => {
+    if (activeNoteId === id && currentNote?.id === id) return;
     setActiveNoteId(id);
     await openNote(id);
   };
@@ -202,7 +204,8 @@ export function Sidebar() {
                 onStartRename={() => setRenamingId(n.id)}
                 onSubmitRename={(title) => {
                   setRenamingId(null);
-                  if (title.trim() && title !== n.title) renameNote(n.id, title.trim(), n.subject_id);
+                  const clean = title.trim();
+                  if (clean !== n.title) renameNote(n.id, clean, n.subject_id);
                 }}
                 onCancelRename={() => setRenamingId(null)}
               />
@@ -269,7 +272,8 @@ export function Sidebar() {
                       onStartRename={() => setRenamingId(n.id)}
                       onSubmitRename={(title) => {
                         setRenamingId(null);
-                        if (title.trim() && title !== n.title) renameNote(n.id, title.trim(), n.subject_id);
+                        const clean = title.trim();
+                        if (clean !== n.title) renameNote(n.id, clean, n.subject_id);
                       }}
                       onCancelRename={() => setRenamingId(null)}
                     />
@@ -352,8 +356,11 @@ function InlineRenameInput({
   const settledRef = useRef(false);
 
   useEffect(() => {
-    ref.current?.focus();
-    ref.current?.select();
+    const id = requestAnimationFrame(() => {
+      ref.current?.focus();
+      ref.current?.select();
+    });
+    return () => cancelAnimationFrame(id);
   }, []);
 
   return (
@@ -363,6 +370,7 @@ function InlineRenameInput({
       value={value}
       onChange={(e) => setValue(e.target.value)}
       onClick={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
       onBlur={() => {
         // Enter/Escape already resolve this input below; losing focus as a
         // side effect of that (e.g. the input unmounting) shouldn't submit
@@ -422,7 +430,14 @@ function NoteRow({
           onCancel={onCancelRename}
         />
       ) : (
-        <button className="row-main" onClick={onSelect} onDoubleClick={onStartRename}>
+        <button
+          className="row-main"
+          onClick={onSelect}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            onStartRename();
+          }}
+        >
           <span className="note-row-title">{note.title || "Sin título"}</span>
           <span className="note-row-time">{timeAgo(note.updated_at)}</span>
         </button>

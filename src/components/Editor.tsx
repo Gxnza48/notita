@@ -37,6 +37,7 @@ export function Editor() {
   const focusMode = useUiStore((s) => s.focusMode);
 
   const [title, setTitle] = useState(currentNote?.title ?? "");
+  const titleRef = useRef(title);
   const [clock, setClock] = useState(() => formatClock(new Date()));
   const lastTextLength = useRef(0);
   const saveTimer = useRef<number | null>(null);
@@ -60,7 +61,7 @@ export function Editor() {
       Underline,
     ],
     content: "",
-    autofocus: "end",
+    autofocus: false,
     editorProps: {
       attributes: {
         class: "notita-editor-content",
@@ -80,7 +81,7 @@ export function Editor() {
   const scheduleSave = useCallback(() => {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(() => {
-      flushSave();
+      flushSaveRef.current();
     }, SAVE_DEBOUNCE_MS);
   }, []);
 
@@ -90,7 +91,7 @@ export function Editor() {
     const analysis = analyzeDoc(json);
     const payload: SaveNotePayload = {
       id: noteIdRef.current,
-      title,
+      title: titleRef.current,
       content: editor.getHTML(),
       content_text: analysis.contentText,
       concept_count: analysis.conceptCount,
@@ -99,8 +100,7 @@ export function Editor() {
       important: analysis.important,
     };
     persistCurrentNote(payload);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [editor, title, persistCurrentNote]);
+  }, [editor, persistCurrentNote]);
 
   const flushSaveRef = useRef(flushSave);
   flushSaveRef.current = flushSave;
@@ -119,6 +119,7 @@ export function Editor() {
     }
 
     noteIdRef.current = currentNote.id;
+    titleRef.current = currentNote.title;
     setTitle(currentNote.title);
     editor.commands.setContent(currentNote.content || "", false);
     lastTextLength.current = editor.getText().length;
@@ -127,15 +128,17 @@ export function Editor() {
     setWpmContext(currentNote.id, currentNote.subject_id);
   }, [editor, currentNote]);
 
-  // The effect above only re-syncs `title` when the note ID changes —
-  // renaming the CURRENTLY open note (e.g. from the sidebar's context
-  // menu) updates currentNote.title without switching notes, and was
-  // previously left stuck showing the old title in this input.
+  // Re-sync `title` when currentNote.title changes externally (e.g. from
+  // sidebar rename). We guard with currentNote.title !== titleRef.current
+  // so typing inside the note-title-input does not trigger redundant state
+  // updates that reset the input cursor.
   useEffect(() => {
     if (currentNote && noteIdRef.current === currentNote.id) {
-      setTitle(currentNote.title);
+      if (currentNote.title !== titleRef.current) {
+        titleRef.current = currentNote.title;
+        setTitle(currentNote.title);
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentNote?.title]);
 
   // flush on true unmount (app closing / editor pane closing)
@@ -265,6 +268,7 @@ export function Editor() {
     : [];
 
   const handleTitleChange = (value: string) => {
+    titleRef.current = value;
     setTitle(value);
     patchCurrentNote({ title: value });
     scheduleSave();
@@ -273,6 +277,7 @@ export function Editor() {
   const handleTitleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
+      flushSaveRef.current();
       editor?.commands.focus("start");
     }
   };

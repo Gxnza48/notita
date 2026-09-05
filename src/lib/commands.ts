@@ -113,6 +113,20 @@ export const COMMANDS: CommandDefinition[] = [
     run: () => useVoiceStore.getState().toggleRecording(),
   },
   {
+    id: "rename-note",
+    label: "Renombrar nota",
+    category: "Notas",
+    shortcut: { key: "F2", display: "F2" },
+    run: () => {
+      const el = document.querySelector<HTMLInputElement>(".note-title-input");
+      if (el) {
+        el.focus();
+        el.select();
+      }
+    },
+    skipWhenModalOpen: true,
+  },
+  {
     id: "close-modal",
     label: "Cerrar ventana",
     category: "General",
